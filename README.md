@@ -11,6 +11,8 @@ GMRS operator **WRCX-212** and radio-firmware enthusiast.
 
 ## Downloads
 
+See the [full release catalog](releases/README.md) for contents and flashing notes.
+
 - [UV Console v0.9.15 GitHub package](releases/UVConsole_WRCX212_v0.9.15_GitHub_Package.zip)
 - [WRCX212 Tweety Bird v1.0 GitHub release](releases/WRCX212_Tweety_Bird_v1.0_GitHub_Release.zip)
 - [UV-K5(8) MIC V1.7 Tweety Bird firmware](releases/MIC_V1.7_WRCX212_TWEETY_BIRD_RELEASE1_CRC_OK.packed.bin)
