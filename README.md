@@ -9,4 +9,4 @@ GMRS operator **WRCX-212** and radio-firmware enthusiast.
 
 ## UV Console download
 
-[Download UVConsole_WRCX212_v0.9.15.zip](releases/UVConsole_WRCX212_v0.9.15.zip)
+[Download the complete UV Console v0.9.15 GitHub package](releases/UVConsole_WRCX212_v0.9.15_GitHub_Package.zip)
