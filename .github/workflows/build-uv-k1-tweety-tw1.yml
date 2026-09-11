@@ -33,6 +33,20 @@ jobs:
       - name: Apply native fast Tweety patch
         run: |
           python uv-k1-universal-multiboot/tools/apply_f4hwn_tweety_tw1.py f4hwn
+          # Upstream compile-firmware.sh requires Fusion's output basename to
+          # remain f4hwn.fusion.bin. Branding/version stay WRCX212 TWEETY/TW1.
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p = Path('f4hwn/CMakePresets.json')
+          data = json.loads(p.read_text())
+          fusion = next(x for x in data['configurePresets'] if x.get('name') == 'Fusion')
+          cache = fusion['cacheVariables']
+          if cache.get('TARGET') != 'wrcx212.tweety':
+              raise SystemExit(f"unexpected patched target: {cache.get('TARGET')!r}")
+          cache['TARGET'] = 'f4hwn.fusion'
+          p.write_text(json.dumps(data, indent=4) + '\n')
+          PY
           cd f4hwn
           git diff --check
           git diff > "$GITHUB_WORKSPACE/WRCX212_TWEETY_TW1_generated.patch"
@@ -50,7 +64,7 @@ jobs:
       - name: Package and verify flashable BIN
         run: |
           set -euo pipefail
-          SRC="f4hwn/build/Fusion/wrcx212.tweety.bin"
+          SRC="f4hwn/build/Fusion/f4hwn.fusion.bin"
           OUTDIR="dist"
           OUT="$OUTDIR/WRCX212_UVK1_TWEETY_FAST_MULTIBOOT_v6.0.0_TW1.bin"
           mkdir -p "$OUTDIR"
