@@ -1,0 +1,31 @@
+name: UV-K1 Universal MultiBoot checks
+
+on:
+  push:
+    paths:
+      - 'uv-k1-universal-multiboot/**'
+      - '.github/workflows/uv-k1-universal-multiboot.yml'
+  pull_request:
+    paths:
+      - 'uv-k1-universal-multiboot/**'
+      - '.github/workflows/uv-k1-universal-multiboot.yml'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Syntax check
+        run: |
+          python -m py_compile uv-k1-universal-multiboot/tools/make_slot.py
+          python -m py_compile uv-k1-universal-multiboot/tools/upload_slot.py
+      - name: Unit tests
+        run: python -m unittest discover -s uv-k1-universal-multiboot/tests -v
+      - name: Verify patch applies to F4HWN v6.0.0
+        run: |
+          git clone --depth 1 --branch v6.0.0 https://github.com/armel/uv-k1-k5v3-firmware-custom.git /tmp/f4hwn
+          cd /tmp/f4hwn
+          git apply --check "$GITHUB_WORKSPACE/uv-k1-universal-multiboot/patches/f4hwn-v6.0.0-universal-multiboot.patch"
