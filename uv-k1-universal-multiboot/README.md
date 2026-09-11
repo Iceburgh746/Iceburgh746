@@ -2,6 +2,26 @@
 
 Source-level extension for **F4HWN v6.0.0** on the Quansheng **UV-K1 / UV-K5 V3 (PY32F071)** that lets the F4HWN Multiboot external-flash slots carry compatible non-F4HWN UV-K1 application images.
 
+## Ready-to-flash U1 base firmware
+
+The compiled Fusion build is now stored permanently in this repository:
+
+`releases/U1/WRCX212_UVK1_F4HWN_6.0.0_Universal_MultiBoot_U1.bin`
+
+Build verification:
+
+- Size: **107,032 bytes** of the 120,832-byte application region.
+- Free application flash: **13,800 bytes**.
+- Application base: `0x08002800`.
+- Initial stack pointer: `0x20004000`.
+- Reset vector: `0x08002D49` (Thumb).
+- Reset handler: `0x08002D48`.
+- SHA-256: `73fbb3f1f8d247340ed23111dec2a59bc2db2381047b2e985bd2c78a3ed099f7`.
+- ARM build, linker, Multiboot RAM-stub isolation, size and vector checks passed.
+- This exact build has **not yet been tested on a physical radio**, so keep a known-good recovery BIN and factory flashing method available for the first hardware test.
+
+`releases/U1/BUILD_MANIFEST.json` and `releases/U1/SHA256SUMS.txt` contain the machine-readable verification information.
+
 ## What U1 does
 
 - Keeps the F4HWN v6.0.0 five-slot / config-bank architecture.
@@ -37,15 +57,19 @@ That restriction is intentional: preserving the factory recovery path is more im
 
 ## Files
 
+- `releases/U1/WRCX212_UVK1_F4HWN_6.0.0_Universal_MultiBoot_U1.bin` — compiled Fusion U1 base firmware.
+- `releases/U1/BUILD_MANIFEST.json` — verified build metadata.
+- `releases/U1/SHA256SUMS.txt` — firmware checksum.
+- `tools/apply_f4hwn_u1.py` — deterministic source patcher used by the verified build workflow.
 - `tools/make_slot.py` — validates a raw BIN and creates a 128 KiB `.fmb` slot package.
 - `tools/upload_slot.py` — uploads the package to user slot 1..4 over the F4HWN serial/VCP protocol.
 - `requirements.txt` — PC dependency (`pyserial`).
-- `patches/f4hwn-v6.0.0-universal-multiboot.patch` — radio-side safety patch for the upstream v6.0.0 source.
+- `patches/f4hwn-v6.0.0-universal-multiboot.patch` — exact generated source diff from the successful build.
 - `docs/PROTOCOL.md` — slot format and host command notes.
 
-## Build the patched F4HWN base firmware
+## Rebuild the patched F4HWN base firmware
 
-Apply the patch to the upstream **v6.0.0** tree:
+Apply the generated patch to the upstream **v6.0.0** tree:
 
 ```bash
 git checkout v6.0.0
@@ -53,7 +77,7 @@ git apply patches/f4hwn-v6.0.0-universal-multiboot.patch
 ./compile-firmware.sh Fusion
 ```
 
-The upstream project also supports `FieldOps`, `Transfer`, and `Labs`.
+The repository's GitHub Actions build uses `tools/apply_f4hwn_u1.py` from a clean official v6.0.0 checkout and publishes the verified result.
 
 Before experimenting with a foreign slot, flash and test the patched F4HWN build normally and allow it to create/verify its Main backup (slot 0).
 
@@ -124,7 +148,7 @@ The exact key sequence for entering the factory flasher depends on the UV-K1/K5 
 
 ## Hardware-test status
 
-The source and host tooling are structured around the v6.0.0 code and wire protocol. A real-radio test is still required before calling a particular foreign firmware image safe. Always keep a known-good F4HWN BIN and the factory recovery flashing path available.
+The firmware has been successfully compiled from the official F4HWN v6.0.0 source and passed automated linker, size, vector, checksum and Multiboot RAM-stub checks. A real-radio test is still required before calling the U1 modification hardware-validated. Always keep a known-good F4HWN BIN and the factory recovery flashing path available.
 
 ## Credits
 
