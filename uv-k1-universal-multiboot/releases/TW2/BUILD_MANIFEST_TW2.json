@@ -1,0 +1,22 @@
+{
+  "file": "WRCX212_UVK1_TWEETY_FAST_MULTIBOOT_TW2_DIAGNOSTIC.bin",
+  "source_tag": "v6.0.0",
+  "preset": "Fusion",
+  "project": "WRCX212 TWEETY TW2 diagnostic",
+  "identity": "stock Fusion / v6.0.0 intentionally preserved",
+  "changes": [
+    "Roger menu ROGER -> TWEETY",
+    "10-note 238 ms fast Tweety",
+    "U1 foreign-slot vector safety"
+  ],
+  "native_multiboot": true,
+  "size_bytes": 107068,
+  "max_size_bytes": 120832,
+  "free_bytes": 13764,
+  "application_base": "0x08002800",
+  "initial_sp": "0x20004000",
+  "reset_vector": "0x08002D49",
+  "reset_handler": "0x08002D48",
+  "sha256": "2fe83c23340868e55a300b78f8ece832ef8341252e966159726947ce568f50c3",
+  "hardware_validation": "not yet tested; built specifically to isolate TW1 boot freeze"
+}

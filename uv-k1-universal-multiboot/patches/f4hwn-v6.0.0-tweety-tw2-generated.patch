@@ -1,0 +1,186 @@
+diff --git a/App/driver/bk4829.c b/App/driver/bk4829.c
+index 27e99d6..ce5fe0b 100644
+--- a/App/driver/bk4829.c
++++ b/App/driver/bk4829.c
+@@ -1759,17 +1759,19 @@ void BK4819_PrepareFSKReceive(void)
+     BK4819_WriteRegister(BK4819_REG_59, 0x3068);
+ }
+ 
++/* WRCX212 TWEETY TW2 diagnostic-safe build.
++ * Keep stock Fusion identity/version and change only the Roger sound path.
++ */
+ static void BK4819_PlayRogerNormal(BK4819_FilterBandwidth_t Bandwidth)
+ {
+-    #if 0
+-        const uint32_t tone1_Hz = 500;
+-        const uint32_t tone2_Hz = 700;
+-    #else
+-        // motorola type
+-        const uint32_t tone1_Hz = 1540;
+-        const uint32_t tone2_Hz = 1310;
+-    #endif
+-
++    static const uint16_t tweety_hz[] = {
++        1900u, 2600u, 2100u, 2850u, 2200u,
++        3050u, 2300u, 3200u, 2450u, 3400u
++    };
++    static const uint8_t tweety_ms[] = {
++        24u, 22u, 24u, 22u, 24u,
++        22u, 24u, 22u, 24u, 30u
++    };
+ 
+     BK4819_EnterTxMute();
+     BK4819_SetAF(BK4819_AF_MUTE);
+@@ -1779,8 +1781,7 @@ static void BK4819_PlayRogerNormal(BK4819_FilterBandwidth_t Bandwidth)
+     if (Bandwidth == BK4819_FILTER_BW_WIDE)
+         BK4819_SetFilterBandwidth(BK4819_FILTER_BW_NARROW, true);
+ 
+-    BK4819_WriteRegister(BK4819_REG_71, scale_freq(tone1_Hz));
+-
++    BK4819_WriteRegister(BK4819_REG_71, scale_freq(tweety_hz[0]));
+     BK4819_EnableTXLink();
+     SYSTEM_DelayMs(50);
+ 
+@@ -1788,18 +1789,15 @@ static void BK4819_PlayRogerNormal(BK4819_FilterBandwidth_t Bandwidth)
+         BK4819_REG_70_ENABLE_TONE1 |
+         (rogerToneGain << BK4819_REG_70_SHIFT_TONE1_TUNING_GAIN));
+ 
+-    BK4819_ExitTxMute();
+-    SYSTEM_DelayMs(80);
+-    BK4819_EnterTxMute();
+-
+-    BK4819_PlayToneRaw(tone2_Hz, 80);
++    for (unsigned int i = 0; i < ARRAY_SIZE(tweety_hz); i++)
++        BK4819_PlayToneRaw(tweety_hz[i], tweety_ms[i]);
+ 
+     BK4819_WriteRegister(BK4819_REG_70, 0x0000);
+ 
+     if (Bandwidth == BK4819_FILTER_BW_WIDE)
+         BK4819_SetFilterBandwidth(Bandwidth, true);
+ 
+-    BK4819_WriteRegister(BK4819_REG_30, 0xC1FE);   // 1 1 0000 0 1 1111 1 1 1 0
++    BK4819_WriteRegister(BK4819_REG_30, 0xC1FE);
+ }
+ 
+ 
+diff --git a/App/driver/mb_flash.c b/App/driver/mb_flash.c
+index 05fd6a5..e795f91 100644
+--- a/App/driver/mb_flash.c
++++ b/App/driver/mb_flash.c
+@@ -29,6 +29,10 @@
+ /* Internal flash granularity (PY32F071xB): program & page-erase = 256 bytes. */
+ #define MB_FLASH_PAGE   256u
+ 
++/* PY32F071xB SRAM geometry used for imported-image validation. */
++#define MB_SRAM_BASE    0x20000000u
++#define MB_SRAM_SIZE    0x00004000u
++
+ /* External SPI flash chip-select is on PA3 (see driver/py25q16.c). */
+ #define MB_CS_PIN       (1u << 3)
+ 
+@@ -662,6 +666,40 @@ static uint8_t mb_read_header(uint8_t slot, mb_slot_header_t *hdr)
+     return MB_OK;
+ }
+ 
++/* Validate the boot-critical ARM vector words of a foreign application.
++ * This runs after CRC validation and before any internal-flash erase. */
++static uint8_t mb_validate_foreign_vectors(uint8_t slot,
++                                           const mb_slot_header_t *hdr)
++{
++    const uint32_t slotBase = MB_SLOT0_EXT_BASE +
++                              (uint32_t)slot * MB_SLOT_STRIDE;
++    uint32_t vectors[2];
++
++    mb_spi_err = 0;
++    mb_ext_read(slotBase + MB_SLOT_IMG_OFFSET,
++                (uint8_t *)vectors, sizeof(vectors));
++    if (mb_spi_err)
++        return MB_ERR_SPI;
++
++    const uint32_t initial_sp = vectors[0];
++    const uint32_t reset_vec  = vectors[1];
++    const uint32_t reset_addr = reset_vec & ~1u;
++    const uint32_t image_end  = MB_INT_APP_BASE + hdr->image_size;
++
++    if (initial_sp < MB_SRAM_BASE ||
++        initial_sp > MB_SRAM_BASE + MB_SRAM_SIZE ||
++        (initial_sp & 0x3u) != 0u)
++        return MB_ERR_VECTOR;
++
++    if ((reset_vec & 1u) == 0u)
++        return MB_ERR_VECTOR;
++
++    if (reset_addr < MB_INT_APP_BASE || reset_addr >= image_end)
++        return MB_ERR_TARGET;
++
++    return MB_OK;
++}
++
+ /* Validate one slot (header + image CRC-32), entirely via polled reads.
+  * Never touches the internal flash. */
+ static uint8_t mb_validate(uint8_t slot, mb_slot_header_t *hdr, uint32_t *crcOut)
+@@ -678,6 +716,14 @@ static uint8_t mb_validate(uint8_t slot, mb_slot_header_t *hdr, uint32_t *crcOut
+         *crcOut = crc;
+     if (mb_spi_err)                               return MB_ERR_SPI;
+     if (crc != hdr->image_crc32)                  return MB_ERR_CRC;
++
++    if (hdr->flags & MB_FLAG_FOREIGN)
++    {
++        err = mb_validate_foreign_vectors(slot, hdr);
++        if (err != MB_OK)
++            return err;
++    }
++
+     return MB_OK;
+ }
+ 
+diff --git a/App/driver/mb_flash.h b/App/driver/mb_flash.h
+index 14b3bdf..9cb0c01 100644
+--- a/App/driver/mb_flash.h
++++ b/App/driver/mb_flash.h
+@@ -56,6 +56,8 @@
+ #define MB_SLOT_MAGIC       0x31424D46u   /* "FMB1" */
+ #define MB_HDR_VERSION      1u
+ #define MB_FLAG_COMMITTED   (1u << 0)     /* image written and verified */
++#define MB_FLAG_FOREIGN     (1u << 1)     /* non-F4HWN PY32F071 application */
++#define MB_FLAG_RETURN_PATCHED (1u << 2)  /* informational: verified return hook */
+ #define MB_NAME_LEN         16
+ #define MB_VERSION_LEN      16
+ 
+@@ -81,7 +83,9 @@ enum {
+     MB_ERR_SPI,          /* external flash read/write timed out*/
+     MB_ERR_SLOT,         /* slot or bank index out of range   */
+     MB_ERR_AUTH,         /* write refused: timestamp mismatch */
+-    MB_ERR_RAM_LOAD      /* restore stub RAM copy mismatch    */
++    MB_ERR_RAM_LOAD,     /* restore stub RAM copy mismatch    */
++    MB_ERR_VECTOR,       /* foreign image has invalid vectors */
++    MB_ERR_TARGET        /* foreign reset target incompatible */
+ };
+ 
+ /* CRC-32 (zlib) over a resident memory buffer.  Multiboot and overlay apps
+diff --git a/App/ui/menu.c b/App/ui/menu.c
+index 1c35570..e863333 100644
+--- a/App/ui/menu.c
++++ b/App/ui/menu.c
+@@ -307,7 +307,7 @@ const char* const gSubMenu_SET_SAV[] =
+ const char* const gSubMenu_ROGER[] =
+ {
+     "OFF",
+-    "ROGER",
++    "TWEETY",
+     "MDC"
+ };
+ 
+diff --git a/App/ui/multiboot.c b/App/ui/multiboot.c
+index aeb08a0..63fa41b 100644
+--- a/App/ui/multiboot.c
++++ b/App/ui/multiboot.c
+@@ -71,6 +71,8 @@ static const char *mb_error_text(uint8_t err)
+         case MB_ERR_SLOT:          return "bad index";
+         case MB_ERR_AUTH:          return "auth";
+         case MB_ERR_RAM_LOAD:      return "RAM LOAD ERROR";
++        case MB_ERR_VECTOR:        return "bad vectors";
++        case MB_ERR_TARGET:        return "wrong target";
+         default:                   return "error";
+     }
+ }
