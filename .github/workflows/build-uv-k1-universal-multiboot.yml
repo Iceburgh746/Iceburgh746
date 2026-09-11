@@ -7,6 +7,9 @@ on:
       - 'uv-k1-universal-multiboot/tools/apply_f4hwn_u1.py'
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-24.04
@@ -90,6 +93,25 @@ jobs:
           Path('dist/SHA256SUMS.txt').write_text(f'{sha}  {p.name}\n')
           print(json.dumps(manifest, indent=2))
           PY
+
+      - name: Publish verified firmware to repository
+        run: |
+          set -euo pipefail
+          REL="uv-k1-universal-multiboot/releases/U1"
+          mkdir -p "$REL"
+          cp dist/WRCX212_UVK1_F4HWN_6.0.0_Universal_MultiBoot_U1.bin "$REL/"
+          cp dist/BUILD_MANIFEST.json "$REL/"
+          cp dist/SHA256SUMS.txt "$REL/"
+          cp WRCX212_U1_generated.patch uv-k1-universal-multiboot/patches/f4hwn-v6.0.0-universal-multiboot.patch
+          git config user.name "WRCX212 Build Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add "$REL" uv-k1-universal-multiboot/patches/f4hwn-v6.0.0-universal-multiboot.patch
+          if git diff --cached --quiet; then
+            echo "Published files already current"
+          else
+            git commit -m "Publish verified WRCX212 UV-K1 U1 firmware"
+            git push origin HEAD:main
+          fi
 
       - name: Upload compiled firmware artifact
         uses: actions/upload-artifact@v4
