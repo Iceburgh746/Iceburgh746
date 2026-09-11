@@ -1,55 +1,24 @@
-diff --git a/App/driver/mb_flash.h b/App/driver/mb_flash.h
---- a/App/driver/mb_flash.h
-+++ b/App/driver/mb_flash.h
-@@
- #define MB_SLOT_MAGIC       0x31424D46u   /* "FMB1" */
- #define MB_HDR_VERSION      1u
- #define MB_FLAG_COMMITTED   (1u << 0)     /* image written and verified */
-+#define MB_FLAG_FOREIGN     (1u << 1)     /* non-F4HWN PY32F071 application */
-+#define MB_FLAG_RETURN_PATCHED (1u << 2)  /* informational: image carries a verified return hook */
- #define MB_NAME_LEN         16
- #define MB_VERSION_LEN      16
-@@
-     MB_ERR_SLOT,         /* slot or bank index out of range   */
-     MB_ERR_AUTH,         /* write refused: timestamp mismatch */
--    MB_ERR_RAM_LOAD      /* restore stub RAM copy mismatch    */
-+    MB_ERR_RAM_LOAD,     /* restore stub RAM copy mismatch    */
-+    MB_ERR_VECTOR,       /* foreign image has invalid vectors */
-+    MB_ERR_TARGET        /* foreign reset target is incompatible */
- };
 diff --git a/App/driver/mb_flash.c b/App/driver/mb_flash.c
+index 05fd6a5..e795f91 100644
 --- a/App/driver/mb_flash.c
 +++ b/App/driver/mb_flash.c
-@@
+@@ -29,6 +29,10 @@
+ /* Internal flash granularity (PY32F071xB): program & page-erase = 256 bytes. */
  #define MB_FLASH_PAGE   256u
-+
-+/* PY32F071xB memory geometry used to sanity-check imported/foreign images.
-+ * F4HWN itself is linked at MB_INT_APP_BASE; a foreign slot must use the same
-+ * application base and the MCU's 16 KiB SRAM window. */
+ 
++/* PY32F071xB SRAM geometry used for imported-image validation. */
 +#define MB_SRAM_BASE    0x20000000u
 +#define MB_SRAM_SIZE    0x00004000u
-@@
- static uint8_t mb_read_header(uint8_t slot, mb_slot_header_t *hdr)
- {
-@@
++
+ /* External SPI flash chip-select is on PA3 (see driver/py25q16.c). */
+ #define MB_CS_PIN       (1u << 3)
+ 
+@@ -662,6 +666,40 @@ static uint8_t mb_read_header(uint8_t slot, mb_slot_header_t *hdr)
      return MB_OK;
  }
  
-+/* Validate the two boot-critical ARM vector words of a foreign application.
-+ *
-+ * This deliberately runs on the radio, after the slot CRC check and before any
-+ * internal-flash erase. Host-side validation is useful for UX but is not a
-+ * safety boundary because a different host can call the slot API.
-+ *
-+ * A compatible PY32F071 UV-K1/K5V3 application must:
-+ *  - start with an initial MSP inside 0x20000000..0x20004000;
-+ *  - use a Thumb reset vector;
-+ *  - point that reset handler into the supplied image at 0x08002800.
-+ *
-+ * This is intentionally a necessary-not-sufficient compatibility test. It
-+ * rejects obviously wrong MCU/link layouts while leaving higher-level
-+ * peripheral/config compatibility to the experimenter.
-+ */
++/* Validate the boot-critical ARM vector words of a foreign application.
++ * This runs after CRC validation and before any internal-flash erase. */
 +static uint8_t mb_validate_foreign_vectors(uint8_t slot,
 +                                           const mb_slot_header_t *hdr)
 +{
@@ -85,8 +54,7 @@ diff --git a/App/driver/mb_flash.c b/App/driver/mb_flash.c
  /* Validate one slot (header + image CRC-32), entirely via polled reads.
   * Never touches the internal flash. */
  static uint8_t mb_validate(uint8_t slot, mb_slot_header_t *hdr, uint32_t *crcOut)
-@@
-     if (crcOut)
+@@ -678,6 +716,14 @@ static uint8_t mb_validate(uint8_t slot, mb_slot_header_t *hdr, uint32_t *crcOut
          *crcOut = crc;
      if (mb_spi_err)                               return MB_ERR_SPI;
      if (crc != hdr->image_crc32)                  return MB_ERR_CRC;
@@ -100,10 +68,36 @@ diff --git a/App/driver/mb_flash.c b/App/driver/mb_flash.c
 +
      return MB_OK;
  }
+ 
+diff --git a/App/driver/mb_flash.h b/App/driver/mb_flash.h
+index 14b3bdf..9cb0c01 100644
+--- a/App/driver/mb_flash.h
++++ b/App/driver/mb_flash.h
+@@ -56,6 +56,8 @@
+ #define MB_SLOT_MAGIC       0x31424D46u   /* "FMB1" */
+ #define MB_HDR_VERSION      1u
+ #define MB_FLAG_COMMITTED   (1u << 0)     /* image written and verified */
++#define MB_FLAG_FOREIGN     (1u << 1)     /* non-F4HWN PY32F071 application */
++#define MB_FLAG_RETURN_PATCHED (1u << 2)  /* informational: verified return hook */
+ #define MB_NAME_LEN         16
+ #define MB_VERSION_LEN      16
+ 
+@@ -81,7 +83,9 @@ enum {
+     MB_ERR_SPI,          /* external flash read/write timed out*/
+     MB_ERR_SLOT,         /* slot or bank index out of range   */
+     MB_ERR_AUTH,         /* write refused: timestamp mismatch */
+-    MB_ERR_RAM_LOAD      /* restore stub RAM copy mismatch    */
++    MB_ERR_RAM_LOAD,     /* restore stub RAM copy mismatch    */
++    MB_ERR_VECTOR,       /* foreign image has invalid vectors */
++    MB_ERR_TARGET        /* foreign reset target incompatible */
+ };
+ 
+ /* CRC-32 (zlib) over a resident memory buffer.  Multiboot and overlay apps
 diff --git a/App/ui/multiboot.c b/App/ui/multiboot.c
+index aeb08a0..63fa41b 100644
 --- a/App/ui/multiboot.c
 +++ b/App/ui/multiboot.c
-@@
+@@ -71,6 +71,8 @@ static const char *mb_error_text(uint8_t err)
          case MB_ERR_SLOT:          return "bad index";
          case MB_ERR_AUTH:          return "auth";
          case MB_ERR_RAM_LOAD:      return "RAM LOAD ERROR";

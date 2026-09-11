@@ -1,0 +1,17 @@
+{
+  "file": "WRCX212_UVK1_F4HWN_6.0.0_Universal_MultiBoot_U1.bin",
+  "source": "armel/uv-k1-k5v3-firmware-custom",
+  "source_tag": "v6.0.0",
+  "preset": "Fusion",
+  "project": "WRCX212 Universal MultiBoot U1",
+  "size_bytes": 107032,
+  "max_size_bytes": 120832,
+  "free_bytes": 13800,
+  "application_base": "0x08002800",
+  "initial_sp": "0x20004000",
+  "reset_vector": "0x08002D49",
+  "reset_handler": "0x08002D48",
+  "sha256": "73fbb3f1f8d247340ed23111dec2a59bc2db2381047b2e985bd2c78a3ed099f7",
+  "build_validation": "compiled + vector/size checks passed",
+  "hardware_validation": "not yet tested on a physical radio"
+}
