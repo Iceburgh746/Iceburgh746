@@ -1,0 +1,100 @@
+name: Build WRCX212 UV-K1 Universal MultiBoot U1
+
+on:
+  push:
+    paths:
+      - '.github/workflows/build-uv-k1-universal-multiboot.yml'
+      - 'uv-k1-universal-multiboot/tools/apply_f4hwn_u1.py'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - name: Checkout WRCX212 project
+        uses: actions/checkout@v4
+
+      - name: Checkout official F4HWN v6.0.0
+        uses: actions/checkout@v4
+        with:
+          repository: armel/uv-k1-k5v3-firmware-custom
+          ref: v6.0.0
+          path: f4hwn
+
+      - name: Apply WRCX212 U1 modifications
+        run: |
+          python uv-k1-universal-multiboot/tools/apply_f4hwn_u1.py f4hwn
+          cd f4hwn
+          git diff --check
+          git diff > "$GITHUB_WORKSPACE/WRCX212_U1_generated.patch"
+          test -s "$GITHUB_WORKSPACE/WRCX212_U1_generated.patch"
+
+      - name: Build Fusion firmware
+        run: |
+          cd f4hwn
+          chmod +x compile-firmware.sh
+          ./compile-firmware.sh Fusion
+
+      - name: Package and verify flashable BIN
+        run: |
+          set -euo pipefail
+          SRC="f4hwn/build/Fusion/f4hwn.fusion.bin"
+          OUTDIR="dist"
+          OUT="$OUTDIR/WRCX212_UVK1_F4HWN_6.0.0_Universal_MultiBoot_U1.bin"
+          mkdir -p "$OUTDIR"
+          test -f "$SRC"
+          cp "$SRC" "$OUT"
+          cp WRCX212_U1_generated.patch "$OUTDIR/WRCX212_U1_generated.patch"
+          python - <<'PY'
+          import hashlib, json, struct
+          from pathlib import Path
+
+          p = Path('dist/WRCX212_UVK1_F4HWN_6.0.0_Universal_MultiBoot_U1.bin')
+          data = p.read_bytes()
+          app_base = 0x08002800
+          max_size = 0x1D800
+          ram_base = 0x20000000
+          ram_end = ram_base + 0x4000
+          if not data or len(data) > max_size:
+              raise SystemExit(f'INVALID SIZE: {len(data)} (max {max_size})')
+          if len(data) < 8:
+              raise SystemExit('BIN too short for vector table')
+          sp, rv = struct.unpack_from('<II', data, 0)
+          rh = rv & ~1
+          if not (ram_base <= sp <= ram_end):
+              raise SystemExit(f'INVALID initial SP 0x{sp:08X}')
+          if not (rv & 1):
+              raise SystemExit(f'INVALID non-Thumb reset vector 0x{rv:08X}')
+          if not (app_base <= rh < app_base + len(data)):
+              raise SystemExit(f'INVALID reset handler 0x{rh:08X}')
+          sha = hashlib.sha256(data).hexdigest()
+          manifest = {
+              'file': p.name,
+              'source': 'armel/uv-k1-k5v3-firmware-custom',
+              'source_tag': 'v6.0.0',
+              'preset': 'Fusion',
+              'project': 'WRCX212 Universal MultiBoot U1',
+              'size_bytes': len(data),
+              'max_size_bytes': max_size,
+              'free_bytes': max_size-len(data),
+              'application_base': f'0x{app_base:08X}',
+              'initial_sp': f'0x{sp:08X}',
+              'reset_vector': f'0x{rv:08X}',
+              'reset_handler': f'0x{rh:08X}',
+              'sha256': sha,
+              'build_validation': 'compiled + vector/size checks passed',
+              'hardware_validation': 'not yet tested on a physical radio'
+          }
+          Path('dist/BUILD_MANIFEST.json').write_text(json.dumps(manifest, indent=2) + '\n')
+          Path('dist/SHA256SUMS.txt').write_text(f'{sha}  {p.name}\n')
+          print(json.dumps(manifest, indent=2))
+          PY
+
+      - name: Upload compiled firmware artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: WRCX212-UVK1-F4HWN-6.0.0-Universal-MultiBoot-U1
+          path: dist/*
+          if-no-files-found: error
+          retention-days: 90
