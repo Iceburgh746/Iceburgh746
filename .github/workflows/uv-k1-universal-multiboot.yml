@@ -22,10 +22,13 @@ jobs:
         run: |
           python -m py_compile uv-k1-universal-multiboot/tools/make_slot.py
           python -m py_compile uv-k1-universal-multiboot/tools/upload_slot.py
+          python -m py_compile uv-k1-universal-multiboot/tools/apply_f4hwn_u1.py
       - name: Unit tests
         run: python -m unittest discover -s uv-k1-universal-multiboot/tests -v
-      - name: Verify patch applies to F4HWN v6.0.0
+      - name: Apply U1 modifications to F4HWN v6.0.0 source
         run: |
           git clone --depth 1 --branch v6.0.0 https://github.com/armel/uv-k1-k5v3-firmware-custom.git /tmp/f4hwn
+          python "$GITHUB_WORKSPACE/uv-k1-universal-multiboot/tools/apply_f4hwn_u1.py" /tmp/f4hwn
           cd /tmp/f4hwn
-          git apply --check "$GITHUB_WORKSPACE/uv-k1-universal-multiboot/patches/f4hwn-v6.0.0-universal-multiboot.patch"
+          git diff --check
+          git diff --exit-code --quiet && { echo 'Patch made no changes'; exit 1; } || true
