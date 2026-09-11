@@ -1,0 +1,141 @@
+name: Build WRCX212 UV-K1 TWEETY TW1 Multiboot
+
+on:
+  push:
+    paths:
+      - '.github/workflows/build-uv-k1-tweety-tw1.yml'
+      - 'uv-k1-universal-multiboot/tools/apply_f4hwn_u1.py'
+      - 'uv-k1-universal-multiboot/tools/apply_f4hwn_tweety_tw1.py'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - name: Checkout WRCX212 project
+        uses: actions/checkout@v4
+
+      - name: Checkout official F4HWN v6.0.0
+        uses: actions/checkout@v4
+        with:
+          repository: armel/uv-k1-k5v3-firmware-custom
+          ref: v6.0.0
+          path: f4hwn
+
+      - name: Apply U1 Multiboot safety patch
+        run: |
+          python uv-k1-universal-multiboot/tools/apply_f4hwn_u1.py f4hwn
+
+      - name: Apply native fast Tweety patch
+        run: |
+          python uv-k1-universal-multiboot/tools/apply_f4hwn_tweety_tw1.py f4hwn
+          cd f4hwn
+          git diff --check
+          git diff > "$GITHUB_WORKSPACE/WRCX212_TWEETY_TW1_generated.patch"
+          test -s "$GITHUB_WORKSPACE/WRCX212_TWEETY_TW1_generated.patch"
+          grep -q '"TWEETY"' App/ui/menu.c
+          grep -q 'WRCX212 TWEETY TW1' App/driver/bk4829.c
+          grep -q 'MB_FLAG_FOREIGN' App/driver/mb_flash.h
+
+      - name: Build native Multiboot Tweety firmware
+        run: |
+          cd f4hwn
+          chmod +x compile-firmware.sh
+          ./compile-firmware.sh Fusion
+
+      - name: Package and verify flashable BIN
+        run: |
+          set -euo pipefail
+          SRC="f4hwn/build/Fusion/wrcx212.tweety.bin"
+          OUTDIR="dist"
+          OUT="$OUTDIR/WRCX212_UVK1_TWEETY_FAST_MULTIBOOT_v6.0.0_TW1.bin"
+          mkdir -p "$OUTDIR"
+          test -f "$SRC"
+          cp "$SRC" "$OUT"
+          cp WRCX212_TWEETY_TW1_generated.patch "$OUTDIR/WRCX212_TWEETY_TW1_generated.patch"
+          python - <<'PY'
+          import hashlib, json, struct
+          from pathlib import Path
+
+          p = Path('dist/WRCX212_UVK1_TWEETY_FAST_MULTIBOOT_v6.0.0_TW1.bin')
+          data = p.read_bytes()
+          app_base = 0x08002800
+          max_size = 0x1D800
+          ram_base = 0x20000000
+          ram_end = ram_base + 0x4000
+          if not data or len(data) > max_size:
+              raise SystemExit(f'INVALID SIZE: {len(data)} (max {max_size})')
+          if len(data) < 8:
+              raise SystemExit('BIN too short for vector table')
+          sp, rv = struct.unpack_from('<II', data, 0)
+          rh = rv & ~1
+          if not (ram_base <= sp <= ram_end):
+              raise SystemExit(f'INVALID initial SP 0x{sp:08X}')
+          if not (rv & 1):
+              raise SystemExit(f'INVALID non-Thumb reset vector 0x{rv:08X}')
+          if not (app_base <= rh < app_base + len(data)):
+              raise SystemExit(f'INVALID reset handler 0x{rh:08X}')
+
+          required = [b'F4HWN MULTIBOOT', b'TWEETY', b'WRCX212 TWEETY', b'v6.0.0-TW1']
+          missing = [x.decode('ascii') for x in required if x not in data]
+          if missing:
+              raise SystemExit(f'Missing expected native-build strings: {missing}')
+
+          sha = hashlib.sha256(data).hexdigest()
+          manifest = {
+              'file': p.name,
+              'source': 'armel/uv-k1-k5v3-firmware-custom',
+              'source_tag': 'v6.0.0',
+              'preset': 'Fusion',
+              'project': 'WRCX212 TWEETY FAST MULTIBOOT TW1',
+              'edition': 'WRCX212 TWEETY',
+              'version': 'v6.0.0-TW1',
+              'tweety_notes_hz': [1900,2600,2100,2850,2200,3050,2300,3200,2450,3400],
+              'tweety_note_ms': [24,22,24,22,24,22,24,22,24,30],
+              'tweety_tone_body_ms': 238,
+              'native_multiboot': True,
+              'u1_foreign_slot_safety': True,
+              'size_bytes': len(data),
+              'max_size_bytes': max_size,
+              'free_bytes': max_size-len(data),
+              'application_base': f'0x{app_base:08X}',
+              'initial_sp': f'0x{sp:08X}',
+              'reset_vector': f'0x{rv:08X}',
+              'reset_handler': f'0x{rh:08X}',
+              'sha256': sha,
+              'build_validation': 'compiled + size/vector/native-Multiboot/Tweety string checks passed',
+              'hardware_validation': 'not yet tested on a physical radio'
+          }
+          Path('dist/BUILD_MANIFEST_TW1.json').write_text(json.dumps(manifest, indent=2) + '\n')
+          Path('dist/SHA256SUMS_TW1.txt').write_text(f'{sha}  {p.name}\n')
+          print(json.dumps(manifest, indent=2))
+          PY
+
+      - name: Publish verified TW1 firmware to repository
+        run: |
+          set -euo pipefail
+          RELEASE_DIR="uv-k1-universal-multiboot/releases/TW1"
+          mkdir -p "$RELEASE_DIR"
+          cp dist/WRCX212_UVK1_TWEETY_FAST_MULTIBOOT_v6.0.0_TW1.bin "$RELEASE_DIR/"
+          cp dist/BUILD_MANIFEST_TW1.json "$RELEASE_DIR/"
+          cp dist/SHA256SUMS_TW1.txt "$RELEASE_DIR/"
+          cp dist/WRCX212_TWEETY_TW1_generated.patch "uv-k1-universal-multiboot/patches/f4hwn-v6.0.0-tweety-tw1-generated.patch"
+          git config user.name "WRCX212 Build Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add "$RELEASE_DIR" uv-k1-universal-multiboot/patches/f4hwn-v6.0.0-tweety-tw1-generated.patch
+          if ! git diff --cached --quiet; then
+            git commit -m "Publish native Multiboot fast Tweety TW1 firmware"
+            git push
+          fi
+
+      - name: Upload TW1 build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: WRCX212-UVK1-TWEETY-FAST-MULTIBOOT-v6.0.0-TW1
+          path: dist/*
+          if-no-files-found: error
+          retention-days: 90
