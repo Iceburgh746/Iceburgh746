@@ -1,0 +1,34 @@
+{
+  "status": "VALIDATED_WORKING",
+  "validated_date": "2026-09-19",
+  "hardware_validation": "Validated on physical UV-K1 by WRCX212: normal boot, Smart Mic functional, transmit audio sounds good",
+  "file": "WRCX212_UVK1_SPACE_TWEETY_SMARTMIC_v6.0.0_SM2_SAFE.bin",
+  "base_file": "WRCX212_UVK1_SPACE_TWEETY_MULTIBOOT_v6.0.0_TW3.bin",
+  "base_sha256": "e862380c7bd4cdda8f4e79137677300c7cb2f60688ed2defc9406e02c22df278",
+  "sha256": "0408e48a548bc031196bb17f60a255d60496c9c59ba3ad4b11b78e7cb20efc63",
+  "size_bytes": 106132,
+  "initial_sp": "0x20004000",
+  "reset_vector": "0x08002D49",
+  "strategy": "fixed-size patch of known-good TW3 binary; no relink/rebuild",
+  "changes": [
+    "Mic gain table raised by +3 dB (6 half-dB steps), saturating at 63",
+    "Existing Compnd menu label renamed to SmtMic (same 6-byte field)",
+    "Existing TX compander/compressor retained: choose SmtMic=TX for 2:1 hardware TX compression",
+    "Version strings changed in place from v6.0.0-TW3 to v6.0.0-SM2"
+  ],
+  "unchanged": [
+    "vector table and startup area",
+    "firmware size",
+    "menu enumeration/layout",
+    "EEPROM/settings layout",
+    "multiboot code/layout",
+    "TW3 Space Tweety tables",
+    "WRCX212 branding"
+  ],
+  "patch_offsets": {
+    "mic_gain_table": "0x18f84",
+    "menu_label": "0x193a9",
+    "version_strings": ["0x175ce","0x19604","0x19640"]
+  },
+  "changed_byte_count": 23
+}
