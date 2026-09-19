@@ -1,0 +1,29 @@
+{
+  "file": "WRCX212_UVK1_SPACE_TWEETY_SMARTMIC_v6.0.0_TW3_SM1.bin",
+  "source_tag": "v6.0.0",
+  "preset": "Fusion",
+  "project": "WRCX212 TW3 Space Tweety Smart Mic SM1",
+  "changes": [
+    "SmartMic OFF/NORMAL/STRONG menu",
+    "live REG_64 TX envelope tracking every 20 ms",
+    "REG_7D automatic microphone gain in 0.5 dB steps",
+    "progressive soft-knee limiter",
+    "silence/noise-floor gain protection",
+    "NORMAL up to +12 dB adaptive boost",
+    "STRONG up to +16 dB adaptive boost",
+    "TW3 Space Tweety 10-note sequence retained",
+    "WRCX212 Multiboot banner",
+    "U1 foreign-slot vector safety"
+  ],
+  "smartmic_default": "NORMAL on first migration",
+  "native_multiboot": true,
+  "size_bytes": 107576,
+  "max_size_bytes": 120832,
+  "free_bytes": 13256,
+  "application_base": "0x08002800",
+  "initial_sp": "0x20004000",
+  "reset_vector": "0x08002D49",
+  "reset_handler": "0x08002D48",
+  "sha256": "de1d65e326db8e4adfa3bf595580fae875512688bd57d43d89c78a3a9be6fb43",
+  "hardware_validation": "compile/link/vector/string verified; RF audio bench test still required"
+}

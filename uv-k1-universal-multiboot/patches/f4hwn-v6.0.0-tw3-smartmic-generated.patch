@@ -1,0 +1,507 @@
+diff --git a/App/CMakeLists.txt b/App/CMakeLists.txt
+index 44f71d8..b629c10 100644
+--- a/App/CMakeLists.txt
++++ b/App/CMakeLists.txt
+@@ -227,6 +227,7 @@ enable_feature(ENABLE_FEAT_F4HWN_SCAN_SUBAUDIBLE)
+ enable_feature(ENABLE_FEAT_F4HWN_RESCUE_OPS)
+ enable_feature(ENABLE_FEAT_F4HWN_VOL)
+ enable_feature(ENABLE_FEAT_F4HWN_AUDIO)
++enable_feature(ENABLE_FEAT_WRCX_SMART_MIC)
+ enable_feature(ENABLE_FEAT_F4HWN_RESET_VFO)
+ enable_feature(ENABLE_FEAT_F4HWN_PMR)
+ enable_feature(ENABLE_FEAT_F4HWN_GMRS_FRS_MURS)
+diff --git a/App/app/app.c b/App/app/app.c
+index 7946677..1d89101 100644
+--- a/App/app/app.c
++++ b/App/app/app.c
+@@ -1704,6 +1704,10 @@ void APP_TimeSlice10ms(void)
+ 
+     if (gCurrentFunction == FUNCTION_TRANSMIT)
+     {   // transmitting
++#ifdef ENABLE_FEAT_WRCX_SMART_MIC
++        if ((gFlashLightBlinkCounter % (20 / 10)) == 0)
++            RADIO_SmartMicTimeSlice();
++#endif
+ #if defined(ENABLE_AUDIO_BAR) && !defined(ENABLE_FEAT_F4HWN_AUDIO_SCOPE)
+         if (gSetting_mic_bar && (gFlashLightBlinkCounter % (150 / 10)) == 0) // once every 150ms
+             UI_DisplayAudioBar();
+diff --git a/App/app/menu.c b/App/app/menu.c
+index 0b80664..a141d47 100644
+--- a/App/app/menu.c
++++ b/App/app/menu.c
+@@ -233,6 +233,12 @@ int MENU_GetLimits(uint8_t menu_id, int32_t *pMin, int32_t *pMax)
+             break;
+ #endif
+ 
++        #ifdef ENABLE_FEAT_WRCX_SMART_MIC
++        case MENU_SMART_MIC:
++            *pMax = 2;
++            break;
++        #endif
++
+         #ifdef ENABLE_AUDIO_BAR
+             case MENU_MIC_BAR:
+         #endif
+@@ -748,6 +754,12 @@ void MENU_AcceptSetting(void)
+                 gSetting_mic_bar = gSubMenuSelection;
+                 break;
+         #endif
++        #ifdef ENABLE_FEAT_WRCX_SMART_MIC
++            case MENU_SMART_MIC:
++                gSetting_smart_mic = gSubMenuSelection;
++                RADIO_SmartMicReset();
++                break;
++        #endif
+ 
+         case MENU_COMPAND:
+             gTxVfo->Compander = gSubMenuSelection;
+@@ -1254,6 +1266,11 @@ void MENU_ShowCurrentSetting(void)
+             gSubMenuSelection = gSetting_mic_bar;
+             break;
+ #endif
++#ifdef ENABLE_FEAT_WRCX_SMART_MIC
++        case MENU_SMART_MIC:
++            gSubMenuSelection = gSetting_smart_mic;
++            break;
++#endif
+ 
+         case MENU_COMPAND:
+             gSubMenuSelection = gTxVfo->Compander;
+diff --git a/App/driver/bk4829.c b/App/driver/bk4829.c
+index 27e99d6..83c1c30 100644
+--- a/App/driver/bk4829.c
++++ b/App/driver/bk4829.c
+@@ -1759,47 +1759,50 @@ void BK4819_PrepareFSKReceive(void)
+     BK4819_WriteRegister(BK4819_REG_59, 0x3068);
+ }
+ 
++/* WRCX212 Space Tweety TW3: 10-note telemetry-style warble. */
+ static void BK4819_PlayRogerNormal(BK4819_FilterBandwidth_t Bandwidth)
+ {
+-    #if 0
+-        const uint32_t tone1_Hz = 500;
+-        const uint32_t tone2_Hz = 700;
+-    #else
+-        // motorola type
+-        const uint32_t tone1_Hz = 1540;
+-        const uint32_t tone2_Hz = 1310;
+-    #endif
+-
++    static const uint16_t tweety_hz[] = {
++        2850u, 4100u, 3300u, 4550u, 3650u,
++        4350u, 3100u, 4650u, 3800u, 4450u
++    };
++    static const uint8_t tweety_ms[] = {
++        28u, 26u, 24u, 30u, 24u,
++        28u, 26u, 32u, 26u, 40u
++    };
++    static const uint8_t tweety_gap_ms[] = {
++        12u, 10u, 13u, 10u, 12u, 10u, 13u, 10u, 14u
++    };
+ 
+     BK4819_EnterTxMute();
+     BK4819_SetAF(BK4819_AF_MUTE);
+ 
+-    const uint8_t rogerToneGain = (Bandwidth == BK4819_FILTER_BW_WIDE) ? 32u : 67u;
++    const uint8_t rogerToneGain = 110u;
+ 
+     if (Bandwidth == BK4819_FILTER_BW_WIDE)
+         BK4819_SetFilterBandwidth(BK4819_FILTER_BW_NARROW, true);
+ 
+-    BK4819_WriteRegister(BK4819_REG_71, scale_freq(tone1_Hz));
+-
++    BK4819_WriteRegister(BK4819_REG_71, scale_freq(tweety_hz[0]));
+     BK4819_EnableTXLink();
+     SYSTEM_DelayMs(50);
+-
+     BK4819_WriteRegister(BK4819_REG_70,
+         BK4819_REG_70_ENABLE_TONE1 |
+         (rogerToneGain << BK4819_REG_70_SHIFT_TONE1_TUNING_GAIN));
+-
+     BK4819_ExitTxMute();
+-    SYSTEM_DelayMs(80);
+-    BK4819_EnterTxMute();
+ 
+-    BK4819_PlayToneRaw(tone2_Hz, 80);
++    for (unsigned int i = 0; i < ARRAY_SIZE(tweety_hz); i++) {
++        BK4819_PlayToneRaw(tweety_hz[i], tweety_ms[i]);
++        if (i + 1u < ARRAY_SIZE(tweety_hz))
++            SYSTEM_DelayMs(tweety_gap_ms[i]);
++    }
+ 
++    BK4819_EnterTxMute();
+     BK4819_WriteRegister(BK4819_REG_70, 0x0000);
+ 
+     if (Bandwidth == BK4819_FILTER_BW_WIDE)
+         BK4819_SetFilterBandwidth(Bandwidth, true);
+ 
+-    BK4819_WriteRegister(BK4819_REG_30, 0xC1FE);   // 1 1 0000 0 1 1111 1 1 1 0
++    BK4819_WriteRegister(BK4819_REG_30, 0xC1FE);
+ }
+ 
+ 
+diff --git a/App/driver/mb_flash.c b/App/driver/mb_flash.c
+index 05fd6a5..e795f91 100644
+--- a/App/driver/mb_flash.c
++++ b/App/driver/mb_flash.c
+@@ -29,6 +29,10 @@
+ /* Internal flash granularity (PY32F071xB): program & page-erase = 256 bytes. */
+ #define MB_FLASH_PAGE   256u
+ 
++/* PY32F071xB SRAM geometry used for imported-image validation. */
++#define MB_SRAM_BASE    0x20000000u
++#define MB_SRAM_SIZE    0x00004000u
++
+ /* External SPI flash chip-select is on PA3 (see driver/py25q16.c). */
+ #define MB_CS_PIN       (1u << 3)
+ 
+@@ -662,6 +666,40 @@ static uint8_t mb_read_header(uint8_t slot, mb_slot_header_t *hdr)
+     return MB_OK;
+ }
+ 
++/* Validate the boot-critical ARM vector words of a foreign application.
++ * This runs after CRC validation and before any internal-flash erase. */
++static uint8_t mb_validate_foreign_vectors(uint8_t slot,
++                                           const mb_slot_header_t *hdr)
++{
++    const uint32_t slotBase = MB_SLOT0_EXT_BASE +
++                              (uint32_t)slot * MB_SLOT_STRIDE;
++    uint32_t vectors[2];
++
++    mb_spi_err = 0;
++    mb_ext_read(slotBase + MB_SLOT_IMG_OFFSET,
++                (uint8_t *)vectors, sizeof(vectors));
++    if (mb_spi_err)
++        return MB_ERR_SPI;
++
++    const uint32_t initial_sp = vectors[0];
++    const uint32_t reset_vec  = vectors[1];
++    const uint32_t reset_addr = reset_vec & ~1u;
++    const uint32_t image_end  = MB_INT_APP_BASE + hdr->image_size;
++
++    if (initial_sp < MB_SRAM_BASE ||
++        initial_sp > MB_SRAM_BASE + MB_SRAM_SIZE ||
++        (initial_sp & 0x3u) != 0u)
++        return MB_ERR_VECTOR;
++
++    if ((reset_vec & 1u) == 0u)
++        return MB_ERR_VECTOR;
++
++    if (reset_addr < MB_INT_APP_BASE || reset_addr >= image_end)
++        return MB_ERR_TARGET;
++
++    return MB_OK;
++}
++
+ /* Validate one slot (header + image CRC-32), entirely via polled reads.
+  * Never touches the internal flash. */
+ static uint8_t mb_validate(uint8_t slot, mb_slot_header_t *hdr, uint32_t *crcOut)
+@@ -678,6 +716,14 @@ static uint8_t mb_validate(uint8_t slot, mb_slot_header_t *hdr, uint32_t *crcOut
+         *crcOut = crc;
+     if (mb_spi_err)                               return MB_ERR_SPI;
+     if (crc != hdr->image_crc32)                  return MB_ERR_CRC;
++
++    if (hdr->flags & MB_FLAG_FOREIGN)
++    {
++        err = mb_validate_foreign_vectors(slot, hdr);
++        if (err != MB_OK)
++            return err;
++    }
++
+     return MB_OK;
+ }
+ 
+diff --git a/App/driver/mb_flash.h b/App/driver/mb_flash.h
+index 14b3bdf..9cb0c01 100644
+--- a/App/driver/mb_flash.h
++++ b/App/driver/mb_flash.h
+@@ -56,6 +56,8 @@
+ #define MB_SLOT_MAGIC       0x31424D46u   /* "FMB1" */
+ #define MB_HDR_VERSION      1u
+ #define MB_FLAG_COMMITTED   (1u << 0)     /* image written and verified */
++#define MB_FLAG_FOREIGN     (1u << 1)     /* non-F4HWN PY32F071 application */
++#define MB_FLAG_RETURN_PATCHED (1u << 2)  /* informational: verified return hook */
+ #define MB_NAME_LEN         16
+ #define MB_VERSION_LEN      16
+ 
+@@ -81,7 +83,9 @@ enum {
+     MB_ERR_SPI,          /* external flash read/write timed out*/
+     MB_ERR_SLOT,         /* slot or bank index out of range   */
+     MB_ERR_AUTH,         /* write refused: timestamp mismatch */
+-    MB_ERR_RAM_LOAD      /* restore stub RAM copy mismatch    */
++    MB_ERR_RAM_LOAD,     /* restore stub RAM copy mismatch    */
++    MB_ERR_VECTOR,       /* foreign image has invalid vectors */
++    MB_ERR_TARGET        /* foreign reset target incompatible */
+ };
+ 
+ /* CRC-32 (zlib) over a resident memory buffer.  Multiboot and overlay apps
+diff --git a/App/misc.c b/App/misc.c
+index e1b8987..fd1e6bb 100644
+--- a/App/misc.c
++++ b/App/misc.c
+@@ -130,6 +130,9 @@ enum BacklightOnRxTx_t gSetting_backlight_on_tx_rx;
+         uint8_t       gSetting_set_audio_fm = 0;
+         uint8_t       gSetting_set_audio_am = 0;
+     #endif
++    #ifdef ENABLE_FEAT_WRCX_SMART_MIC
++        uint8_t       gSetting_smart_mic = 1; // 0=OFF, 1=NORMAL, 2=STRONG
++    #endif
+     #ifdef ENABLE_FEAT_F4HWN_NARROWER
+         bool          gSetting_set_nfm = 0;
+     #endif
+diff --git a/App/misc.h b/App/misc.h
+index dd5d6e3..aa1d0c1 100644
+--- a/App/misc.h
++++ b/App/misc.h
+@@ -205,6 +205,9 @@ extern enum BacklightOnRxTx_t gSetting_backlight_on_tx_rx;
+         extern uint8_t            gSetting_set_audio_fm;
+         extern uint8_t            gSetting_set_audio_am;
+     #endif
++    #ifdef ENABLE_FEAT_WRCX_SMART_MIC
++        extern uint8_t            gSetting_smart_mic;
++    #endif
+     #ifdef ENABLE_FEAT_F4HWN_NARROWER
+         extern bool               gSetting_set_nfm;
+     #endif
+diff --git a/App/radio.c b/App/radio.c
+index fb84c2d..e54acd0 100644
+--- a/App/radio.c
++++ b/App/radio.c
+@@ -963,6 +963,73 @@ void RADIO_SetupRegisters(bool switchToForeground)
+     }
+ #endif
+ 
++
++#ifdef ENABLE_FEAT_WRCX_SMART_MIC
++/* WRCX212 Smart Mic v1
++ * REG_64 supplies live TX voice amplitude. REG_7D low 6 bits control
++ * microphone gain in 0.5 dB steps. The controller uses a progressive
++ * soft-knee reduction for peaks and a deliberately slow recovery.
++ */
++static uint8_t  gSmartMicGain;
++static uint16_t gSmartMicEnvelope;
++static uint8_t  gSmartMicRecover;
++
++void RADIO_SmartMicReset(void)
++{
++    gSmartMicGain = gEeprom.MIC_SENSITIVITY_TUNING & 0x3Fu;
++    gSmartMicEnvelope = 0u;
++    gSmartMicRecover = 0u;
++    BK4819_WriteRegister(BK4819_REG_7D, 0xE940u | gSmartMicGain);
++}
++
++void RADIO_SmartMicTimeSlice(void)
++{
++    if (gSetting_smart_mic == 0u)
++        return;
++
++    uint16_t sample = BK4819_GetVoiceAmplitudeOut() & 0x7FFFu;
++
++    if (sample > gSmartMicEnvelope)
++        gSmartMicEnvelope += (sample - gSmartMicEnvelope + 1u) >> 1;
++    else
++        gSmartMicEnvelope -= (gSmartMicEnvelope - sample) >> 3;
++
++    const uint8_t base = gEeprom.MIC_SENSITIVITY_TUNING & 0x3Fu;
++    const uint8_t max_boost = (gSetting_smart_mic >= 2u) ? 32u : 24u;
++    const uint8_t max_gain = (base + max_boost > 63u) ? 63u : (uint8_t)(base + max_boost);
++    const uint8_t min_gain = (base > 12u) ? (uint8_t)(base - 12u) : 0u;
++    uint8_t next = gSmartMicGain;
++
++    if (gSmartMicEnvelope > 3600u) {
++        next = (next > min_gain + 3u) ? (uint8_t)(next - 4u) : min_gain;
++        gSmartMicRecover = 0u;
++    } else if (gSmartMicEnvelope > 2600u) {
++        next = (next > min_gain + 1u) ? (uint8_t)(next - 2u) : min_gain;
++        gSmartMicRecover = 0u;
++    } else if (gSmartMicEnvelope > 1900u) {
++        next = (next > min_gain) ? (uint8_t)(next - 1u) : min_gain;
++        gSmartMicRecover = 0u;
++    } else if (gSmartMicEnvelope >= 350u && gSmartMicEnvelope < 1100u) {
++        if (++gSmartMicRecover >= 5u) {
++            gSmartMicRecover = 0u;
++            if (next < max_gain)
++                next++;
++        }
++    } else if (gSmartMicEnvelope < 300u) {
++        gSmartMicRecover = 0u;
++        if (next > base)
++            next--;
++    } else {
++        gSmartMicRecover = 0u;
++    }
++
++    if (next != gSmartMicGain) {
++        gSmartMicGain = next;
++        BK4819_WriteRegister(BK4819_REG_7D, 0xE940u | gSmartMicGain);
++    }
++}
++#endif
++
+ void RADIO_SetTxParameters(void)
+ {
+     BK4819_FilterBandwidth_t Bandwidth = gCurrentVfo->CHANNEL_BANDWIDTH;
+@@ -998,6 +1065,9 @@ void RADIO_SetTxParameters(void)
+     BK4819_SetCompander((gRxVfo->Modulation == MODULATION_FM && (gRxVfo->Compander == 1 || gRxVfo->Compander >= 3)) ? gRxVfo->Compander : 0);
+ 
+     BK4819_PrepareTransmit();
++#ifdef ENABLE_FEAT_WRCX_SMART_MIC
++    RADIO_SmartMicReset();
++#endif
+ 
+     SYSTEM_DelayMs(10);
+ 
+diff --git a/App/radio.h b/App/radio.h
+index cb61f58..7864632 100644
+--- a/App/radio.h
++++ b/App/radio.h
+@@ -167,6 +167,10 @@ void     RADIO_SetupRegisters(bool switchToForeground);
+ #endif
+ BK4819_FilterBandwidth_t RADIO_GetAMFilterBandwidth(const VFO_Info_t *pVfo);
+ void     RADIO_SetTxParameters(void);
++#ifdef ENABLE_FEAT_WRCX_SMART_MIC
++void RADIO_SmartMicReset(void);
++void RADIO_SmartMicTimeSlice(void);
++#endif
+ void     RADIO_SetupAGC(bool listeningAM, bool disable);
+ void     RADIO_SetModulation(ModulationMode_t modulation);
+ void     RADIO_SetVfoState(VfoState_t State);
+diff --git a/App/settings.c b/App/settings.c
+index 56a051f..7565cce 100644
+--- a/App/settings.c
++++ b/App/settings.c
+@@ -76,6 +76,9 @@ void SETTINGS_InitEEPROM(void)
+             configByte[4] &= (uint8_t)~0x01;  // KEY_LOCK = 0
+             configByte[4] &= (uint8_t)~0x02;  // MENU_LOCK = 0
+             configByte[4] &= (uint8_t)~0x3C;  // SET_KEY = 0
++            #ifdef ENABLE_FEAT_WRCX_SMART_MIC
++                configByte[3] = 1;  // NORMAL on first Smart Mic firmware boot
++            #endif
+             //configByte[4] &= (uint8_t)~0x40;  // SET_NAV = 0
+ 
+             PY25Q16_WriteBuffer(0x00A000, configByte, sizeof(configByte), false);
+@@ -148,6 +151,8 @@ void SETTINGS_InitEEPROM(void)
+     gEeprom.TX_TIMEOUT_TIMER     = (Data[2] > 4 && Data[2] < 180) ? Data[2] : 11;
+     #ifdef ENABLE_NOAA
+         gEeprom.NOAA_AUTO_SCAN   = (Data[3] <  2) ? Data[3] : false;
++    #elif defined(ENABLE_FEAT_WRCX_SMART_MIC)
++        gSetting_smart_mic       = (Data[3] < 3) ? Data[3] : 1;
+     #endif
+     #ifdef ENABLE_FEAT_F4HWN_RESCUE_OPS
+         gEeprom.KEY_LOCK = (Data[4] & 0x01) != 0;
+@@ -890,6 +895,8 @@ void SETTINGS_SaveSettings(void)
+     State[2] = gEeprom.TX_TIMEOUT_TIMER;
+     #ifdef ENABLE_NOAA
+         State[3] = gEeprom.NOAA_AUTO_SCAN;
++    #elif defined(ENABLE_FEAT_WRCX_SMART_MIC)
++        State[3] = gSetting_smart_mic;
+     #else
+         State[3] = false;
+     #endif
+diff --git a/App/ui/menu.c b/App/ui/menu.c
+index 1c35570..edc7dee 100644
+--- a/App/ui/menu.c
++++ b/App/ui/menu.c
+@@ -98,6 +98,9 @@ const t_menu_item MenuList[] =
+     {"BatTxt",      MENU_BAT_TXT       },
+     {"Mic",         MENU_MIC           },
+     {"MicBar",      MENU_MIC_BAR       },
++#ifdef ENABLE_FEAT_WRCX_SMART_MIC
++    {"SmtMic",      MENU_SMART_MIC     },
++#endif
+     {"ChDisp",      MENU_MDF           }, // was "MDF"
+     {"POnMsg",      MENU_PONMSG        },
+     {"BLTime",      MENU_ABR           }, // was "ABR"
+@@ -304,10 +307,19 @@ const char* const gSubMenu_SET_SAV[] =
+ };
+ #endif
+ 
++#ifdef ENABLE_FEAT_WRCX_SMART_MIC
++const char* const gSubMenu_SMART_MIC[] =
++{
++    "OFF",
++    "NORMAL",
++    "STRONG"
++};
++#endif
++
+ const char* const gSubMenu_ROGER[] =
+ {
+     "OFF",
+-    "ROGER",
++    "TWEETY",
+     "MDC"
+ };
+ 
+@@ -596,7 +608,11 @@ static const uint8_t CatPower[]   = {
+ static const uint8_t CatDisplay[] = { MENU_MDF, MENU_PONMSG, MENU_ABR, MENU_ABR_MIN, MENU_ABR_MAX, MENU_ABR_ON_TX_RX, MENU_SET_CTR, MENU_SET_INV, MENU_SET_MET, MENU_SET_GUI, MENU_VOL };
+ static const uint8_t CatTimers[]  = { MENU_TOT, MENU_SET_TOT, MENU_SET_EOT, MENU_SET_TMR };
+ static const uint8_t CatAudio[]   = {
+-    MENU_MIC, MENU_MIC_BAR, MENU_BEEP,
++    MENU_MIC, MENU_MIC_BAR,
++#ifdef ENABLE_FEAT_WRCX_SMART_MIC
++    MENU_SMART_MIC,
++#endif
++    MENU_BEEP,
+ #ifdef ENABLE_FEAT_F4HWN_VOL
+     MENU_SET_VOL,
+ #endif
+@@ -986,6 +1002,12 @@ void UI_DisplayMenu(void)
+             #endif
+             break;
+ 
++        #ifdef ENABLE_FEAT_WRCX_SMART_MIC
++        case MENU_SMART_MIC:
++            strcpy(String, gSubMenu_SMART_MIC[gSubMenuSelection]);
++            break;
++        #endif
++
+         case MENU_STEP: {
+             uint16_t step = gStepFrequencyTable[FREQUENCY_GetStepIdxFromSortedIdx(gSubMenuSelection)];
+             sprintf(String, "%d.%02ukHz", step / 100, step % 100);
+diff --git a/App/ui/menu.h b/App/ui/menu.h
+index 2f75f73..4239df0 100644
+--- a/App/ui/menu.h
++++ b/App/ui/menu.h
+@@ -70,6 +70,9 @@ enum
+     MENU_RP_STE,
+     MENU_MIC,
+     MENU_MIC_BAR,
++#ifdef ENABLE_FEAT_WRCX_SMART_MIC
++    MENU_SMART_MIC,
++#endif
+     MENU_COMPAND,
+     MENU_1_CALL,
+     MENU_S_LIST,
+@@ -251,6 +254,9 @@ extern const char* const gSubMenu_PTT_ID[5];
+     extern const char* const        gSubMenu_PONMSG[4];
+ #endif
+ 
++#ifdef ENABLE_FEAT_WRCX_SMART_MIC
++extern const char* const            gSubMenu_SMART_MIC[3];
++#endif
+ extern const char* const            gSubMenu_ROGER[3];
+ extern const char* const            gSubMenu_RESET[2];
+ extern const char* const            gSubMenu_F_LOCK[F_LOCK_LEN];
+diff --git a/App/ui/multiboot.c b/App/ui/multiboot.c
+index aeb08a0..bb87385 100644
+--- a/App/ui/multiboot.c
++++ b/App/ui/multiboot.c
+@@ -71,6 +71,8 @@ static const char *mb_error_text(uint8_t err)
+         case MB_ERR_SLOT:          return "bad index";
+         case MB_ERR_AUTH:          return "auth";
+         case MB_ERR_RAM_LOAD:      return "RAM LOAD ERROR";
++        case MB_ERR_VECTOR:        return "bad vectors";
++        case MB_ERR_TARGET:        return "wrong target";
+         default:                   return "error";
+     }
+ }
+@@ -121,7 +123,7 @@ static uint8_t mb_copy_slot_version(char *dst, uint8_t cap, const mb_slot_header
+ static void mb_status_bar(void)
+ {
+     UI_StatusClear();
+-    GUI_DisplaySmallestInverse("F4HWN MULTIBOOT", 34, 0, true, true, 94);
++    GUI_DisplaySmallestInverse("WRCX212 MULTIBOOT", 34, 0, true, true, 94);
+ 
+     /* Thin line dressing up the otherwise blank row between the status bar and
+      * the first content row. Drawn on gFrameBuffer[0] (line 0), which every
