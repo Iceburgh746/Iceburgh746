@@ -422,7 +422,7 @@ static void BK4819_PlayRogerNormal(BK4819_FilterBandwidth_t Bandwidth)
     replace_once(bk4829, old_roger, new_roger)
 
     # ---------- WRCX212 multiboot banner ----------
-    replace_once(multiboot_c, '"F4HWN MULTIBOOT"', '"WRCX212 MULTIBOOT"')
+    replace_once(multiboot_c, 'GUI_DisplaySmallestInverse("F4HWN MULTIBOOT", 34, 0, true, true, 94);', 'GUI_DisplaySmallestInverse("WRCX212 MULTIBOOT", 34, 0, true, true, 94);')
 
     print("WRCX212 TW3 Space Tweety + Smart Mic patch applied")
     print("SmartMic menu: OFF / NORMAL / STRONG")
