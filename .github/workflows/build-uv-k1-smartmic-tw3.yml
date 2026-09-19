@@ -1,0 +1,161 @@
+name: Build WRCX212 UV-K1 TW3 Smart Mic
+
+on:
+  push:
+    paths:
+      - '.github/workflows/build-uv-k1-smartmic-tw3.yml'
+      - 'uv-k1-universal-multiboot/tools/apply_f4hwn_smartmic_tw3.py'
+      - 'uv-k1-universal-multiboot/tools/apply_f4hwn_u1.py'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - name: Checkout WRCX212 project
+        uses: actions/checkout@v4
+
+      - name: Checkout official F4HWN v6.0.0
+        uses: actions/checkout@v4
+        with:
+          repository: armel/uv-k1-k5v3-firmware-custom
+          ref: v6.0.0
+          path: f4hwn
+
+      - name: Apply U1 Multiboot safety patch
+        run: python uv-k1-universal-multiboot/tools/apply_f4hwn_u1.py f4hwn
+
+      - name: Apply TW3 Space Tweety + Smart Mic patch
+        run: |
+          python uv-k1-universal-multiboot/tools/apply_f4hwn_smartmic_tw3.py f4hwn
+          cd f4hwn
+          git diff --check
+          git diff > "$GITHUB_WORKSPACE/WRCX212_TW3_SMARTMIC_generated.patch"
+          test -s "$GITHUB_WORKSPACE/WRCX212_TW3_SMARTMIC_generated.patch"
+          grep -q '"SmartMic"' App/ui/menu.c
+          grep -q '"NORMAL"' App/ui/menu.c
+          grep -q '"STRONG"' App/ui/menu.c
+          grep -q '"TWEETY"' App/ui/menu.c
+          grep -q '2850u, 4100u, 3300u, 4550u' App/driver/bk4829.c
+          grep -q 'gSetting_smart_mic' App/misc.c
+          grep -q 'RADIO_SmartMicTimeSlice' App/radio.c
+          grep -q 'WRCX212 MULTIBOOT' App/ui/multiboot.c
+
+      - name: Build Fusion Multiboot TW3 Smart Mic firmware
+        run: |
+          cd f4hwn
+          chmod +x compile-firmware.sh
+          ./compile-firmware.sh Fusion \
+            -DENABLE_FEAT_WRCX_SMART_MIC=ON \
+            -DAUTHOR_STRING_1=WRCX212 \
+            -DAUTHOR_STRING_2=F4HWN \
+            -DAUTHOR_STRING=WRCX212 \
+            -DVERSION_STRING_2=v6.0.0-TW3-SM1 \
+            -DEDITION_STRING="TWEETY BIRD"
+
+      - name: Package and verify Smart Mic BIN
+        run: |
+          set -euo pipefail
+          SRC="f4hwn/build/Fusion/f4hwn.fusion.bin"
+          OUTDIR="dist"
+          OUT="$OUTDIR/WRCX212_UVK1_SPACE_TWEETY_SMARTMIC_v6.0.0_TW3_SM1.bin"
+          mkdir -p "$OUTDIR"
+          test -f "$SRC"
+          cp "$SRC" "$OUT"
+          cp WRCX212_TW3_SMARTMIC_generated.patch "$OUTDIR/"
+          python - <<'PY'
+          import hashlib, json, struct
+          from pathlib import Path
+
+          p = Path('dist/WRCX212_UVK1_SPACE_TWEETY_SMARTMIC_v6.0.0_TW3_SM1.bin')
+          data = p.read_bytes()
+          app_base = 0x08002800
+          max_size = 0x1D800
+          ram_base = 0x20000000
+          ram_end = ram_base + 0x4000
+
+          if not data or len(data) > max_size:
+              raise SystemExit(f'INVALID SIZE {len(data)}')
+
+          sp, rv = struct.unpack_from('<II', data, 0)
+          rh = rv & ~1
+          if not (ram_base <= sp <= ram_end):
+              raise SystemExit(f'bad SP 0x{sp:08X}')
+          if not (rv & 1):
+              raise SystemExit(f'bad reset vector 0x{rv:08X}')
+          if not (app_base <= rh < app_base + len(data)):
+              raise SystemExit(f'bad reset handler 0x{rh:08X}')
+
+          required = [
+              b'SmartMic', b'NORMAL', b'STRONG', b'TWEETY',
+              b'WRCX212 MULTIBOOT', b'TWEETY BIRD',
+              b'v6.0.0-TW3-SM1', b'WRCX212'
+          ]
+          missing = [x.decode() for x in required if x not in data]
+          if missing:
+              raise SystemExit(f'missing strings: {missing}')
+
+          sha = hashlib.sha256(data).hexdigest()
+          manifest = {
+              'file': p.name,
+              'source_tag': 'v6.0.0',
+              'preset': 'Fusion',
+              'project': 'WRCX212 TW3 Space Tweety Smart Mic SM1',
+              'changes': [
+                  'SmartMic OFF/NORMAL/STRONG menu',
+                  'live REG_64 TX envelope tracking every 20 ms',
+                  'REG_7D automatic microphone gain in 0.5 dB steps',
+                  'progressive soft-knee limiter',
+                  'silence/noise-floor gain protection',
+                  'NORMAL up to +12 dB adaptive boost',
+                  'STRONG up to +16 dB adaptive boost',
+                  'TW3 Space Tweety 10-note sequence retained',
+                  'WRCX212 Multiboot banner',
+                  'U1 foreign-slot vector safety'
+              ],
+              'smartmic_default': 'NORMAL on first migration',
+              'native_multiboot': True,
+              'size_bytes': len(data),
+              'max_size_bytes': max_size,
+              'free_bytes': max_size - len(data),
+              'application_base': f'0x{app_base:08X}',
+              'initial_sp': f'0x{sp:08X}',
+              'reset_vector': f'0x{rv:08X}',
+              'reset_handler': f'0x{rh:08X}',
+              'sha256': sha,
+              'hardware_validation': 'compile/link/vector/string verified; RF audio bench test still required'
+          }
+          Path('dist/BUILD_MANIFEST_TW3_SM1.json').write_text(json.dumps(manifest, indent=2) + '\n')
+          Path('dist/SHA256SUMS_TW3_SM1.txt').write_text(f'{sha}  {p.name}\n')
+          print(json.dumps(manifest, indent=2))
+          PY
+
+      - name: Publish verified Smart Mic firmware
+        run: |
+          set -euo pipefail
+          RELEASE_DIR="uv-k1-universal-multiboot/releases/TW3-SM1"
+          PATCH_DIR="uv-k1-universal-multiboot/patches"
+          mkdir -p "$RELEASE_DIR" "$PATCH_DIR"
+          cp dist/WRCX212_UVK1_SPACE_TWEETY_SMARTMIC_v6.0.0_TW3_SM1.bin "$RELEASE_DIR/"
+          cp dist/BUILD_MANIFEST_TW3_SM1.json "$RELEASE_DIR/"
+          cp dist/SHA256SUMS_TW3_SM1.txt "$RELEASE_DIR/"
+          cp dist/WRCX212_TW3_SMARTMIC_generated.patch "$PATCH_DIR/f4hwn-v6.0.0-tw3-smartmic-generated.patch"
+          git config user.name "WRCX212 Build Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add "$RELEASE_DIR" "$PATCH_DIR/f4hwn-v6.0.0-tw3-smartmic-generated.patch"
+          if ! git diff --cached --quiet; then
+            git commit -m "Publish TW3 Smart Mic UV-K1 firmware"
+            git push
+          fi
+
+      - name: Upload Smart Mic artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: WRCX212-UVK1-TW3-SMARTMIC-SM1
+          path: dist/*
+          if-no-files-found: error
+          retention-days: 90
