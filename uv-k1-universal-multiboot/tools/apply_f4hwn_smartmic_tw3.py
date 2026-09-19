@@ -321,8 +321,8 @@ void RADIO_SmartMicTimeSlice(void)
 
     replace_once(
         radio_h,
-        "void RADIO_SetTxParameters(void);\n",
-        "void RADIO_SetTxParameters(void);\n"
+        "void     RADIO_SetTxParameters(void);\n",
+        "void     RADIO_SetTxParameters(void);\n"
         "#ifdef ENABLE_FEAT_WRCX_SMART_MIC\n"
         "void RADIO_SmartMicReset(void);\n"
         "void RADIO_SmartMicTimeSlice(void);\n"
