@@ -126,7 +126,7 @@ def main(root: Path) -> None:
         '    {"Mic",         MENU_MIC           },\n    {"MicBar",      MENU_MIC_BAR       },\n',
         '    {"Mic",         MENU_MIC           },\n    {"MicBar",      MENU_MIC_BAR       },\n'
         '#ifdef ENABLE_FEAT_WRCX_SMART_MIC\n'
-        '    {"SmartMic",    MENU_SMART_MIC     },\n'
+        '    {"SmtMic",      MENU_SMART_MIC     },\n'
         '#endif\n',
     )
     replace_once(
