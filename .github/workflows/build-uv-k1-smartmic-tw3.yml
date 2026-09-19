@@ -36,7 +36,7 @@ jobs:
           git diff --check
           git diff > "$GITHUB_WORKSPACE/WRCX212_TW3_SMARTMIC_generated.patch"
           test -s "$GITHUB_WORKSPACE/WRCX212_TW3_SMARTMIC_generated.patch"
-          grep -q '"SmartMic"' App/ui/menu.c
+          grep -q '"SmtMic"' App/ui/menu.c
           grep -q '"NORMAL"' App/ui/menu.c
           grep -q '"STRONG"' App/ui/menu.c
           grep -q '"TWEETY"' App/ui/menu.c
@@ -91,7 +91,7 @@ jobs:
               raise SystemExit(f'bad reset handler 0x{rh:08X}')
 
           required = [
-              b'SmartMic', b'NORMAL', b'STRONG', b'TWEETY',
+              b'SmtMic', b'NORMAL', b'STRONG', b'TWEETY',
               b'WRCX212 MULTIBOOT', b'TWEETY BIRD',
               b'v6.0.0-TW3-SM1', b'WRCX212'
           ]
