@@ -46,7 +46,7 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p dist
-          cp f4hwn/build/Fusion/f4hwn.fusion.bin dist/TW3_EXACT_BASE_CANDIDATE.bin
+          cp f4hwn/build/Fusion/f4hwn.fusion.bin dist/TW3_EXACT_BASE_CANDIDATE.bin\n          cp f4hwn/build/Fusion/f4hwn.fusion dist/TW3_EXACT_BASE_CANDIDATE.elf\n          cp f4hwn/build/Fusion/f4hwn.fusion.map dist/TW3_EXACT_BASE_CANDIDATE.map
           python - <<'PY'
           import hashlib,struct,json
           from pathlib import Path
