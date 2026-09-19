@@ -1,0 +1,95 @@
+name: Verify WRCX212 UV-K1 TW3 Baseline
+
+on:
+  push:
+    paths:
+      - '.github/workflows/verify-uv-k1-tw3-baseline.yml'
+      - 'uv-k1-universal-multiboot/tools/apply_f4hwn_tweety_tw3_base.py'
+      - 'uv-k1-universal-multiboot/tools/apply_f4hwn_u1.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - name: Checkout WRCX212 project
+        uses: actions/checkout@v4
+
+      - name: Checkout official F4HWN v6.0.0
+        uses: actions/checkout@v4
+        with:
+          repository: armel/uv-k1-k5v3-firmware-custom
+          ref: v6.0.0
+          path: f4hwn
+
+      - name: Apply U1 Multiboot safety patch
+        run: python uv-k1-universal-multiboot/tools/apply_f4hwn_u1.py f4hwn
+
+      - name: Apply known-good TW3 patch
+        run: |
+          python uv-k1-universal-multiboot/tools/apply_f4hwn_tweety_tw3_base.py f4hwn
+          cd f4hwn
+          git diff --check
+          grep -q '"TWEETY"' App/ui/menu.c
+          grep -q '2850u, 4100u, 3300u, 4550u' App/driver/bk4829.c
+          grep -q 'WRCX212 MULTIBOOT' App/ui/multiboot.c
+
+      - name: Build TW3 baseline
+        run: |
+          cd f4hwn
+          chmod +x compile-firmware.sh
+          ./compile-firmware.sh Fusion \
+            -DAUTHOR_STRING_1=WRCX212 \
+            -DAUTHOR_STRING_2=F4HWN \
+            -DAUTHOR_STRING=WRCX212 \
+            -DVERSION_STRING_2=v6.0.0-TW3 \
+            -DEDITION_STRING="TWEETY BIRD"
+
+      - name: Verify and package baseline
+        run: |
+          set -euo pipefail
+          SRC="f4hwn/build/Fusion/f4hwn.fusion.bin"
+          OUT="dist/WRCX212_UVK1_SPACE_TWEETY_MULTIBOOT_v6.0.0_TW3_REBUILD.bin"
+          mkdir -p dist
+          test -f "$SRC"
+          cp "$SRC" "$OUT"
+          python - <<'PY'
+          import hashlib, json, struct
+          from pathlib import Path
+          p=Path("dist/WRCX212_UVK1_SPACE_TWEETY_MULTIBOOT_v6.0.0_TW3_REBUILD.bin")
+          d=p.read_bytes()
+          app_base=0x08002800
+          max_size=0x1D800
+          sp,rv=struct.unpack_from("<II",d,0)
+          rh=rv & ~1
+          if not d or len(d)>max_size: raise SystemExit(f"bad size {len(d)}")
+          if not (0x20000000 <= sp <= 0x20004000): raise SystemExit(f"bad SP {sp:#x}")
+          if not (rv & 1): raise SystemExit(f"bad reset vector {rv:#x}")
+          if not (app_base <= rh < app_base+len(d)): raise SystemExit(f"bad reset handler {rh:#x}")
+          req=[b"v6.0.0-TW3",b"WRCX212",b"TWEETY",b"TWEETY BIRD",b"WRCX212 MULTIBOOT"]
+          miss=[x.decode() for x in req if x not in d]
+          if miss: raise SystemExit(f"missing {miss}")
+          sha=hashlib.sha256(d).hexdigest()
+          Path("dist/TW3_REBUILD_SHA256.txt").write_text(f"{sha}  {p.name}\n")
+          Path("dist/TW3_REBUILD_INFO.json").write_text(json.dumps({
+            "file":p.name,
+            "size_bytes":len(d),
+            "sha256":sha,
+            "initial_sp":f"0x{sp:08X}",
+            "reset_vector":f"0x{rv:08X}",
+            "reset_handler":f"0x{rh:08X}"
+          },indent=2)+"\n")
+          print("size",len(d),"sha256",sha)
+          PY
+
+      - name: Upload TW3 baseline artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: WRCX212-UVK1-TW3-BASELINE-REBUILD
+          path: dist/*
+          if-no-files-found: error
+          retention-days: 30
