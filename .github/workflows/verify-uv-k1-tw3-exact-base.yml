@@ -1,0 +1,68 @@
+name: Verify WRCX212 UV-K1 TW3 Exact Base
+
+on:
+  push:
+    paths:
+      - '.github/workflows/verify-uv-k1-tw3-exact-base.yml'
+      - 'uv-k1-universal-multiboot/tools/apply_f4hwn_tweety_tw3_base.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - name: Checkout WRCX212 project
+        uses: actions/checkout@v4
+
+      - name: Checkout official F4HWN v6.0.0
+        uses: actions/checkout@v4
+        with:
+          repository: armel/uv-k1-k5v3-firmware-custom
+          ref: v6.0.0
+          path: f4hwn
+
+      - name: Apply TW3 only
+        run: |
+          python uv-k1-universal-multiboot/tools/apply_f4hwn_tweety_tw3_base.py f4hwn
+          cd f4hwn
+          git diff --check
+
+      - name: Build exact TW3 candidate
+        run: |
+          cd f4hwn
+          chmod +x compile-firmware.sh
+          ./compile-firmware.sh Fusion \
+            -DAUTHOR_STRING_1=WRCX212 \
+            -DAUTHOR_STRING_2=F4HWN \
+            -DAUTHOR_STRING=WRCX212 \
+            -DVERSION_STRING_2=v6.0.0-TW3 \
+            -DEDITION_STRING="TWEETY BIRD"
+
+      - name: Package
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          cp f4hwn/build/Fusion/f4hwn.fusion.bin dist/TW3_EXACT_BASE_CANDIDATE.bin
+          python - <<'PY'
+          import hashlib,struct,json
+          from pathlib import Path
+          p=Path("dist/TW3_EXACT_BASE_CANDIDATE.bin")
+          d=p.read_bytes()
+          sp,rv=struct.unpack_from("<II",d,0)
+          info={"size_bytes":len(d),"sha256":hashlib.sha256(d).hexdigest(),
+                "sp":f"0x{sp:08X}","rv":f"0x{rv:08X}"}
+          Path("dist/TW3_EXACT_BASE_INFO.json").write_text(json.dumps(info,indent=2)+"\n")
+          print(info)
+          PY
+
+      - name: Upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: WRCX212-UVK1-TW3-EXACT-BASE-CANDIDATE
+          path: dist/*
+          if-no-files-found: error
+          retention-days: 30
