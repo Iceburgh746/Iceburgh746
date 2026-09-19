@@ -1,0 +1,8 @@
+WRCX212 UV-K1 SMART MIC SM2 SAFE
+Status: VALIDATED WORKING on physical UV-K1, 2026-09-19.
+Base: known-good TW3 Space Tweety binary.
+Enable transmit leveling: set SmtMic = TX on the channel/VFO.
+OFF disables the compressor but the conservative +3 dB mic table remains.
+TX/RX retains the firmware's original TX compressor + RX expander behavior.
+No menu IDs, EEPROM fields, boot code, vector table, multiboot layout, Tweety tables, or firmware length were changed.
+SHA256: 0408e48a548bc031196bb17f60a255d60496c9c59ba3ad4b11b78e7cb20efc63
