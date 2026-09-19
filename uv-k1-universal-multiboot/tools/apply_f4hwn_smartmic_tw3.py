@@ -66,13 +66,13 @@ def main(root: Path) -> None:
     # Default Smart Mic to NORMAL when this new firmware version first migrates settings.
     replace_once(
         settings_c,
-        "            configByte[4] &= (uint8_t)~0x3C;  // SET_KEY = 0\\n"
-        "            //configByte[4] &= (uint8_t)~0x40;  // SET_NAV = 0\\n",
-        "            configByte[4] &= (uint8_t)~0x3C;  // SET_KEY = 0\\n"
-        "            #ifdef ENABLE_FEAT_WRCX_SMART_MIC\\n"
-        "                configByte[3] = 1;  // NORMAL on first Smart Mic firmware boot\\n"
-        "            #endif\\n"
-        "            //configByte[4] &= (uint8_t)~0x40;  // SET_NAV = 0\\n",
+        "            configByte[4] &= (uint8_t)~0x3C;  // SET_KEY = 0\n"
+        "            //configByte[4] &= (uint8_t)~0x40;  // SET_NAV = 0\n",
+        "            configByte[4] &= (uint8_t)~0x3C;  // SET_KEY = 0\n"
+        "            #ifdef ENABLE_FEAT_WRCX_SMART_MIC\n"
+        "                configByte[3] = 1;  // NORMAL on first Smart Mic firmware boot\n"
+        "            #endif\n"
+        "            //configByte[4] &= (uint8_t)~0x40;  // SET_NAV = 0\n",
     )
 
     # ---------- Persistent setting ----------
