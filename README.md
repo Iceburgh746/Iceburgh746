@@ -11,12 +11,19 @@ Welcome to the **WRCX212 Radio Lab**. This repository collects practical radio-f
 
 | Project | What it does | Status |
 |---|---|---|
+| [**Broadcast FM USA 1.1-USA**](broadcast-fm-usa/) | USA FM receiver overlay: 88.1–107.9 MHz, 200 kHz steps, scanning and 48 presets; Labs 6.2.0 | Build/integrity checked; display fix awaiting radio confirmation |
 | [**UV-K1 Space Tweety + Smart Mic SM2 SAFE**](uv-k1-universal-multiboot/releases/TW3-SM2/README.md) | Space-style 10-note Tweety roger tone, stronger mic drive, and BK4829 2:1 TX compression via `SmtMic = TX` | **Hardware validated** |
 | [**UV-K1 Universal MultiBoot U1**](uv-k1-universal-multiboot/) | Extends F4HWN v6.0.0 Multiboot for compatible UV-K1 / UV-K5 V3 application images while preserving the factory recovery path | Build/vector/checksum verified |
 | [**UV Console v0.9.15**](uv-console/README.md) | Native Windows programming, live LCD viewer, calibration, boot-logo, RF log, and DFU maintenance tools | Published |
 | [**WRCX212 Gateway**](wrcx212-gateway/) | Radio/gateway experimentation and supporting tools | Active project |
 | [**WRCX212 Tweety Bird v1.0**](releases/WRCX212_Tweety_Bird_v1.0_GitHub_Release.zip) | Quansheng-compatible Tweety Bird firmware release package | Published |
 | [**UV-K5(8) MIC V1.7 Tweety Bird**](releases/MIC_V1.7_WRCX212_TWEETY_BIRD_RELEASE1_CRC_OK.packed.bin) | CRC-checked UV-K5(8) audio-control / Tweety Bird firmware | Published |
+
+## Latest app: Broadcast FM USA 1.1-USA
+
+[**App details, installation, controls, and downloads →**](broadcast-fm-usa/)
+
+USA broadcast FM overlay for **Quansheng UV-K1 with F4HWN Labs 6.2.0**: 88.1–107.9 MHz in 200 kHz steps, manual seek, auto-scan, and 48 shared presets. Version **1.1-USA** fixes the FM USA label overlapping the frequency digits. Install through **UV Studio → Apps**, not the firmware flasher. **Auto-scan replaces the shared FM preset table.** Build and file-integrity checks passed; full emulator tests apply to 1.0-USA, and the revised display still needs on-radio confirmation.
 
 ## Latest: UV-K1 Space Tweety + Smart Mic
 

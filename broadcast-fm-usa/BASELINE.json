@@ -1,0 +1,7 @@
+{
+  "official_url": "https://github.com/armel/uv-k1-k5v3-firmware-custom/blob/main/archive/apps/v6.2.0/BroadcastFM.app",
+  "official_sha256": "634344cae2abad79f8a923cfe610a68327f4c9fa17f6300a339770f627320943",
+  "unmodified_release_source_code_reproduces_official_binary": true,
+  "unmodified_assets_reproduce_official_assets": true,
+  "compiler": "Arm GNU Toolchain 13.3.Rel1, GCC 13.3.1"
+}

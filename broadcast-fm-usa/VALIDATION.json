@@ -1,0 +1,40 @@
+{
+  "target": "F4HWN Labs v6.2.0",
+  "upstream_commit": "0ade03c0b1c94514566fadf7ce1c7a1f542a2283",
+  "sha256": "e66886162fe5808d6aad95596eb9dcdb9ca163d953313bb9086ce3929d47ba85",
+  "file_bytes": 2382,
+  "overlay_bytes": 2236,
+  "asset_bytes": 82,
+  "ABI": 1,
+  "API_min": 2,
+  "VMA": "0x20000280",
+  "required_caps": 1,
+  "limitations": "No physical radio testing of version 1.1-USA. Full mocked ARM behavior tests passed for 1.0-USA. Rerun of emulator suite for 1.1-USA was unavailable because the local emulator dependency directory could not be accessed. Only the label drawing call and version metadata changed.",
+  "previous_version_binary_tests": {
+    "version": "1.0-USA",
+    "sha256": "a2e18e4c0b8d0358fa6f8639db8399de8b018905f07d84f9a381de4a8549789e",
+    "tests": [
+      "Imported VFO clamp/parity and hardware band 0",
+      "All 100 channels traversed both ways, including both wrap boundaries",
+      "UV-K1 reversed physical navigation mapping",
+      "221 direct-entry frequencies: accept only odd tenths 88.1-107.9",
+      "F+1 cannot leave USA plan",
+      "MR skips invalid presets, retains 107.9, wraps, preserves all slots",
+      "No usable presets falls back to VFO without erasing presets",
+      "Save preset 48 and recall in MR",
+      "Delete preset advances to next valid station",
+      "Manual seek wraps and stops at mocked station",
+      "Manual seek direction reversal",
+      "Auto-scan: empty band, both endpoints, 48-station limit, unmute and terminate",
+      "Auto-scan direction reversal terminates at lower boundary",
+      "Scan cancellation unmutes",
+      "Screen saver/wake and USA screen assets"
+    ]
+  },
+  "version": "1.1-USA",
+  "tests": [
+    "Compilation with warnings as errors and linker overlay bound passed",
+    "Header, ABI, VMA, capability, lengths and both checksums passed",
+    "Layout review: label uses print_normal on framebuffer page 0; frequency uses pages 1 and 2"
+  ]
+}

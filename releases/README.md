@@ -2,6 +2,12 @@
 
 This catalog collects published WRCX212 downloads plus the newest validated UV-K1 development work. Verify filenames and checksums before flashing firmware.
 
+## Broadcast FM USA 1.1-USA — Labs 6.2.0 overlay
+
+[**Project details and installation**](../broadcast-fm-usa/) · [**Installable .app**](../broadcast-fm-usa/downloads/WRCX212-Broadcast-FM-USA-Labs-6.2.0.app) · [**Source ZIP**](../broadcast-fm-usa/downloads/WRCX212-Broadcast-FM-USA-source.zip) · [**SHA-256 checksums**](../broadcast-fm-usa/downloads/SHA256SUMS.txt)
+
+Receive-only USA FM app for UV-K1: 88.1–107.9 MHz, odd tenths, 200 kHz tuning/scan increments and 48 shared memories. Version 1.1-USA fixes label/frequency overlap. Install through UV Studio's Apps view while running Labs 6.2.0; this is not a firmware image. Auto-scan clears and replaces the shared FM presets. The project page distinguishes the completed build/integrity checks and earlier emulator tests from remaining radio tests.
+
 ## Latest validated UV-K1 project — Space Tweety + Smart Mic SM2 SAFE
 
 **Release documentation:** [TW3-SM2 release notes and validation](../uv-k1-universal-multiboot/releases/TW3-SM2/README.md)
