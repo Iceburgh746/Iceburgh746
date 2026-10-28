@@ -4,6 +4,10 @@
 
 A 40-channel Citizens Band (CB) receiver concept for the Quansheng UV-K1 and F4HWN Labs environment. The intended operating modes are **AM**, **FM**, and **DSB** (double-sideband). Mode selection and actual demodulation behavior require a compatible implementation and hardware verification; a channel-list file alone does not add radio demodulation modes.
 
+## Source reference
+
+[**View/copy the CB-40 multimode C reference source**](cb40_multimode_reference.c). This is a documented reconstruction of the channel table, scanner state machine and radio-adapter interfaces, **not the original source used to compile v0.3**. The original source has not been recovered from the binary; the reference requires hardware-specific implementation before it can build into a working `.app`.
+
 ## Channel plan
 
 The standard US 40-channel CB frequencies are listed below. All frequencies are in MHz. Channel order follows the standard CB numbering (not sorted by frequency).
