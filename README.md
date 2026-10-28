@@ -11,6 +11,7 @@ Welcome to the **WRCX212 Radio Lab**. This repository collects practical radio-f
 
 | Project | What it does | Status |
 |---|---|---|
+| [**UV-K1 CB-40 Multimode (AM/FM/DSB)**](uv-k1-cb40-multimode/) | 40-channel CB frequency plan and planned selectable AM, FM, and DSB receiver application | Documentation published; multimode binary not yet verified |
 | [**Broadcast FM USA 1.1-USA**](broadcast-fm-usa/) | USA FM receiver overlay: 88.1–107.9 MHz, 200 kHz steps, scanning and 48 presets; Labs 6.2.0 | Build/integrity checked; display fix awaiting radio confirmation |
 | [**UV-K1 Space Tweety + Smart Mic SM2 SAFE**](uv-k1-universal-multiboot/releases/TW3-SM2/README.md) | Space-style 10-note Tweety roger tone, stronger mic drive, and BK4829 2:1 TX compression via `SmtMic = TX` | **Hardware validated** |
 | [**UV-K1 Universal MultiBoot U1**](uv-k1-universal-multiboot/) | Extends F4HWN v6.0.0 Multiboot for compatible UV-K1 / UV-K5 V3 application images while preserving the factory recovery path | Build/vector/checksum verified |
