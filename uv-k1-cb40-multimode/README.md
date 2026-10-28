@@ -1,6 +1,6 @@
 # WRCX212 CB-40 Multimode — Quansheng UV-K1
 
-**Project status: channel plan/documentation published; multimode `.app` binary not yet located or verified.**
+**Project status: WRCX212-CB40-MULTIMODE-v0.3.app provided and structurally verified. Radio operation and individual modulation modes have not been hardware-tested in this review.**
 
 A 40-channel Citizens Band (CB) receiver concept for the Quansheng UV-K1 and F4HWN Labs environment. The intended operating modes are **AM**, **FM**, and **DSB** (double-sideband). Mode selection and actual demodulation behavior require a compatible implementation and hardware verification; a channel-list file alone does not add radio demodulation modes.
 
@@ -31,9 +31,11 @@ The standard US 40-channel CB frequencies are listed below. All frequencies are 
 
 ## Compatibility and limitations
 
-The available AM scanner baseline and the channel data do **not** prove that a compiled AM/FM/DSB Labs app is available. In particular, FM or DSB display labels must not be mistaken for verified demodulation. A correct release needs the actual compiled `.app`, exact firmware API/version compatibility, build validation, and receiver tests on the UV-K1. Reception near 27 MHz may be limited by RF front-end behavior.
+An actual CB40 multimode-labeled v0.3 overlay binary has now been supplied. The binary's structural integrity does **not** by itself establish that AM, FM and DSB demodulation all work correctly. In particular, FM or DSB display labels must not be mistaken for verified demodulation. The uploaded binary has an FAP1 header, embedded version 0.3, API minimum 1, 3,428 code bytes within the 4,096-byte overlay budget, and an internally matching CRC32. Exact firmware compatibility and receiver functionality still need on-radio verification. Reception near 27 MHz may be limited by RF front-end behavior.
 
-**Installation:** Do not attempt to install this README or a CSV as a radio application. An actual compatible `.app` must be installed using the Labs app installer, not the full firmware flasher.
+**Supplied build:** `WRCX212-CB40-MULTIMODE-v0.3.app` (3,492 bytes total). SHA-256: `c0f6cfecb7e8008d7bbde6d84b0c53a592045f6ed116fcd0d0e5d9456573c1e3`. App code CRC32: `c2a819b9`. Embedded strings include `MODE: UP/DOWN`, `M:MODE 5:SCAN *:MON`, `MONITOR RX ONLY`, and `LSB UNAVAILABLE`; mode support should not be assumed beyond physical verification.
+
+**Installation:** Install only a verified compatible `.app` using the Labs app installer, not the full firmware flasher. The binary is not yet uploaded in this GitHub folder.
 
 ---
 
