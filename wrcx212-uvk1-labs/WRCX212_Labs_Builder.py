@@ -32,7 +32,7 @@ FREQS = [
 C_SOURCE = r"""
 #include <stdint.h>
 #include <stdbool.h>
-#include "../app_api.h"
+#include "app_api.h"
 /* Channels are in 10-Hz units, never MHz or kHz. */
 static const uint32_t f[22] = {
   46256250u,46258750u,46261250u,46263750u,46266250u,46268750u,46271250u,
@@ -193,7 +193,7 @@ def main():
         run([gcc,"-mcpu=cortex-m0plus","-mthumb","-Os","-std=gnu11",
              "-ffreestanding","-fno-builtin","-fno-common","-fomit-frame-pointer",
              "-ffunction-sections","-fdata-sections","-Wall","-Wextra",
-             "-nostdlib","-nostartfiles","-T",str(linker),
+             "-nostdlib","-nostartfiles","-I",str(REPO/"App"/"apps"),"-T",str(linker),
              "-Wl,--defsym,APP_VMA=0x20000280","-Wl,--gc-sections",
              "-Wl,--build-id=none","-Wl,--no-warn-rwx-segments",
              str(source),"-lgcc","-o",str(elf)],cwd=app)
