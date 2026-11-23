@@ -1,0 +1,2 @@
+Location,Name,Frequency,Duplex,Offset,Tone,rToneFreq,cToneFreq,DtcsCode,DtcsPolarity,RxDtcsCode,CrossMode,Mode,TStep,Skip,Power,Comment,URCALL,RPT1CALL,RPT2CALL,DVCODE
+1,CHICKAREE,462.70000,split,467.70000,Tone,123.0,123.0,023,NN,023,Tone->Tone,FM,5.00,,8.0W,"KAF9349 Johnstown Chickaree Mountain Cambria County; open listing; WRCX212 user-confirmed successful QSO; TX permitted subject to current operator rules",,,,
