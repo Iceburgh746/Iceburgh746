@@ -1,0 +1,23 @@
+name: Analog Parrot compile smoke test
+on:
+  push:
+    paths:
+      - "projects/dm32uv-kraken-analog-parrot/**"
+      - ".github/workflows/wrcx212-analog-parrot.yml"
+  workflow_dispatch:
+jobs:
+  syntax:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Host GCC syntax test with intentionally minimal SDK mocks
+        run: |
+          set -euxo pipefail
+          cd projects/dm32uv-kraken-analog-parrot
+          gcc -std=c99 -Wall -Wextra -Werror -Wno-unused-function -Wno-unused-parameter -fsyntax-only -I tests/mock -I overlay overlay/krk_parrot.c
+      - name: Portable ADPCM4 core tests (earlier implementation)
+        run: |
+          set -euxo pipefail
+          cd projects/dm32uv-kraken-analog-parrot
+          gcc -std=c99 -Wall -Wextra -Werror -fsanitize=address,undefined -o /tmp/ap_voice_tests tests/test_core.c analog_parrot_core.c
+          /tmp/ap_voice_tests
