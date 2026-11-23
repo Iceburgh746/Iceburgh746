@@ -36,6 +36,7 @@ struct krk_fm_opts { int (*abort)(void); u32 budget; };
 extern const char*const krk_offon_labels[];
 extern volatile u32 krk_screen_owner;
 void krk_mon_set(int on);
+int krk_mon_on(void);
 void krk_line(int line,const char*text,u16 color);
 void krk_cat(char*dest,const char*src);
 void krk_cati(char*dest,int n);
