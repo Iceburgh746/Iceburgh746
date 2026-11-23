@@ -1,0 +1,9 @@
+Location,Name,Frequency,Duplex,Offset,Tone,rToneFreq,cToneFreq,DtcsCode,DtcsPolarity,RxDtcsCode,CrossMode,Mode,TStep,Skip,Power,Comment,URCALL,RPT1CALL,RPT2CALL,DVCODE
+1,RPT15,462.55000,split,467.55000,,88.5,88.5,023,NN,023,Tone->Tone,FM,5.00,S,8.0W,Generic GMRS repeater pair; no access tone; configure before TX,,,,
+2,RPT16,462.57500,split,467.57500,,88.5,88.5,023,NN,023,Tone->Tone,FM,5.00,S,8.0W,Generic GMRS repeater pair; no access tone; configure before TX,,,,
+3,RPT17,462.60000,split,467.60000,,88.5,88.5,023,NN,023,Tone->Tone,FM,5.00,S,8.0W,Generic GMRS repeater pair; no access tone; configure before TX,,,,
+4,RPT18,462.62500,split,467.62500,,88.5,88.5,023,NN,023,Tone->Tone,FM,5.00,S,8.0W,Generic GMRS repeater pair; no access tone; configure before TX,,,,
+5,RPT19,462.65000,split,467.65000,,88.5,88.5,023,NN,023,Tone->Tone,FM,5.00,S,8.0W,Generic GMRS repeater pair; no access tone; configure before TX,,,,
+6,RPT20,462.67500,split,467.67500,,88.5,88.5,023,NN,023,Tone->Tone,FM,5.00,S,8.0W,Generic GMRS repeater pair; no access tone; configure before TX,,,,
+7,RPT21,462.70000,split,467.70000,,88.5,88.5,023,NN,023,Tone->Tone,FM,5.00,S,8.0W,Generic GMRS repeater pair; no access tone; configure before TX,,,,
+8,RPT22,462.72500,split,467.72500,,88.5,88.5,023,NN,023,Tone->Tone,FM,5.00,S,8.0W,Generic GMRS repeater pair; no access tone; configure before TX,,,,
