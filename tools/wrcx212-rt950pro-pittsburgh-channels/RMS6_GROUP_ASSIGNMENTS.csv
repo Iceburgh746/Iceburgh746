@@ -1,0 +1,15 @@
+Letter,RMS6_Group_Name,Start_Slot,End_Slot,Channel_Count,Default_Scan,Notes
+A,01_GMRS_SIMPLEX,301,322,22,Eligible after checking access,Groups must be assigned in RMS after importing; CHIRP CSV may not import group memberships
+B,02_REPEATER_PAIRS,323,330,8,Skip,Groups must be assigned in RMS after importing; CHIRP CSV may not import group memberships
+C,03_VERIFIED_LOCAL,331,332,2,Eligible after checking access,Groups must be assigned in RMS after importing; CHIRP CSV may not import group memberships
+D,04_UNVERIFIED_LOCAL,333,341,9,Skip,Groups must be assigned in RMS after importing; CHIRP CSV may not import group memberships
+E,05_NOAA_WEATHER,342,348,7,Skip,Groups must be assigned in RMS after importing; CHIRP CSV may not import group memberships
+F,06_EXTENDED_RANGE,349,349,1,Eligible after checking access,Groups must be assigned in RMS after importing; CHIRP CSV may not import group memberships
+G,07_NORTH,350,351,2,Skip,Groups must be assigned in RMS after importing; CHIRP CSV may not import group memberships
+H,08_NORTHEAST,352,354,3,Skip,Groups must be assigned in RMS after importing; CHIRP CSV may not import group memberships
+I,09_EAST,355,357,3,Skip,Groups must be assigned in RMS after importing; CHIRP CSV may not import group memberships
+J,10_SOUTHEAST,358,359,2,Skip,Groups must be assigned in RMS after importing; CHIRP CSV may not import group memberships
+K,11_SOUTH,360,360,1,Skip,Groups must be assigned in RMS after importing; CHIRP CSV may not import group memberships
+L,12_SOUTHWEST,361,363,3,Skip,Groups must be assigned in RMS after importing; CHIRP CSV may not import group memberships
+M,13_WEST,364,365,2,Skip,Groups must be assigned in RMS after importing; CHIRP CSV may not import group memberships
+N,14_NORTHWEST,366,367,2,Skip,Groups must be assigned in RMS after importing; CHIRP CSV may not import group memberships
