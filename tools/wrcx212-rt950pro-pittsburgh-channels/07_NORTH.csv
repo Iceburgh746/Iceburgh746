@@ -1,0 +1,3 @@
+Location,Name,Frequency,Duplex,Offset,Tone,rToneFreq,cToneFreq,DtcsCode,DtcsPolarity,RxDtcsCode,CrossMode,Mode,TStep,Skip,Power,Comment,URCALL,RPT1CALL,RPT2CALL,DVCODE
+1,N_NEWCAS,462.65000,off,0.00000,,88.5,88.5,023,NN,023,Tone->Tone,FM,5.00,S,0.0W,"RX ONLY candidate | WSIF564 | New Castle, Lawrence PA | RepeaterBook listing OPEN; tone not listed | Source: https://www.repeaterbook.com/gmrs/Display_SS.php?state_id=42",,,,
+2,N_VENUS,462.67500,off,0.00000,Tone,127.3,127.3,023,NN,023,Tone->Tone,FM,5.00,S,0.0W,"RX ONLY candidate | WRPG447 | Venus, Venango PA | RepeaterBook OPEN; northeast-north from Pittsburgh | Source: https://www.repeaterbook.com/gmrs/Display_SS.php?state_id=42",,,,
