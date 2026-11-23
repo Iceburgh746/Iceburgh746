@@ -69,3 +69,30 @@ Sources:
 - https://www.pa-emcomm.net/pa-gmrs-repeaters.html
 
 Updated channel plan: 49 individual memory rows across 6 group files (22 simplex, 8 generic repeater pairs, 2 verified local, 9 candidate local, 7 NOAA, 1 Chickaree).
+
+
+## All-direction extended-range reconnaissance — 2026-11-23
+
+The Penn Hills / Pittsburgh coverage search now includes all eight compass directions. Groups 07 through 14 contain **receive-only exploratory candidates with scan skip enabled**, not confirmed two-way coverage from Penn Hills. Source RepeaterBook entries were cross-checked against PA/OH/WV statewide tables. The full myGMRS logged-in dynamic directory is not independently accessible: its public operator forum announcements were used where available, so this is **not** a claim of exhaustive coverage.
+
+- N — New Castle (PA); Venus/Venango (PA)
+- NE — Northern Cambria, Rockton and Mahaffey (PA)
+- E — Williamsburg/Blair, Geistown and Johnstown/Cambria (PA)
+- SE — Springs/Somerset (PA) and user-confirmed Chickaree (duplicates group 06 intentionally for directional planning)
+- S — Uniontown/Fayette (PA), marked OFF-AIR by RepeaterBook, excluded from active scan
+- SW — Fairmont (WV) and Wheeling (WV)
+- W — Niles and Akron (OH)
+- NW — Erie (PA) and Niles (OH), some entries intended for travel/fringe detection only
+
+**Interpretation:** Geographic direction does NOT establish RF coverage, especially across the Allegheny Plateau. A listing marked OPEN does not guarantee on-air status, access permission, or local reachability. Do not enable TX, remove scan skip, or bulk-import these candidates as active channels until verification. A repeated channel in different directional banks is intentional but may be consolidated based on user's actual scan group capacity.
+
+**Radio-specific import check:** `Duplex=off` signals intended RX-only; confirm in nicFW-compatible editor since its importer may not support that field. All repeaters normally use +5 MHz when eventually configured for authorized TX, but this CSV deliberately suppresses TX. If editor doesn't enforce RX-only, DO NOT import these channels until you can confirm TX inhibit.
+
+**Scope:** 49 previous channel entries + 18 compass-direction reconnaissance memory rows = **67 entries across 14 proposed groups**. Unique repeater count is lower because Chickaree and Niles intentionally appear in more than one group. User's original native configuration is not yet merged. No test has been performed against exact nicFW950 6.00.19d/e RMS codeplug format.
+
+### References for cross-check
+- PA: https://www.repeaterbook.com/gmrs/Display_SS.php?state_id=42
+- OH: https://www.repeaterbook.com/gmrs/Display_SS.php?state_id=39
+- WV: https://www.repeaterbook.com/gmrs/Display_SS.php?state_id=54
+- PA reported off-air: https://www.repeaterbook.com/gmrs/verify.php?state_id=42&type=off
+- myGMRS SW PA operator forum: https://forums.mygmrs.com/clubs/16-south-western-pa-gmrs/
