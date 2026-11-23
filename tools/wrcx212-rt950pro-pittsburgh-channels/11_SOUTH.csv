@@ -1,0 +1,2 @@
+Location,Name,Frequency,Duplex,Offset,Tone,rToneFreq,cToneFreq,DtcsCode,DtcsPolarity,RxDtcsCode,CrossMode,Mode,TStep,Skip,Power,Comment,URCALL,RPT1CALL,RPT2CALL,DVCODE
+1,S_UNIONTOWN,462.70000,off,0.00000,Tone,141.3,141.3,023,NN,023,Tone->Tone,FM,5.00,S,0.0W,"RX ONLY candidate | WSHM438 | Uniontown, Fayette PA | REPEATERBOOK OFF-AIR despite OPEN use; RX ONLY; do not treat operational | Source: https://www.repeaterbook.com/gmrs/verify.php?state_id=42&type=off",,,,
