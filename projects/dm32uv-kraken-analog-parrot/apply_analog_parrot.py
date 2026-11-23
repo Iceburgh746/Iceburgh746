@@ -49,13 +49,11 @@ def main():
     # Validate current menu JSON before touching any file.
     json.loads(m)
     new_p = p.replace("void krk_vox_tick(void);",
-                      "void krk_analog_parrot_bg_tick(void);\\nvoid krk_vox_tick(void);", 1)
+                      "void krk_analog_parrot_bg_tick(void);\nvoid krk_vox_tick(void);", 1)
     if new_p == p:
         raise RuntimeError("No VOX prototype anchor.")
     new_p = new_p.replace("    krk_mon_tick();",
-                          "    krk_analog_parrot_bg_tick();\\n    krk_mon_tick();", 1)
-    # Use exact real newlines, not an accidental literal \\n escape sequence.
-    new_p = new_p.replace("\\\\n", "\n")
+                          "    krk_analog_parrot_bg_tick();\n    krk_mon_tick();", 1)
     new_m = m
     for a,b in labels:
         new_m = new_m.replace(a,b,1)
