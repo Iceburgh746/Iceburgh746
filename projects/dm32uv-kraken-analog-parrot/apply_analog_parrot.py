@@ -39,7 +39,7 @@ def main():
         raise RuntimeError("Unknown background-hook baseline. Refusing to patch.")
     # Edit the exact Parrot rows by key, never another menu row named "Check".
     def relabel(text, key, old, new):
-        pattern = r'("key": "' + re.escape(key) + r'",\\s*"label": )"' + re.escape(old) + r'"'
+        pattern = r'("key": "' + re.escape(key) + r'",\s*"label": )"' + re.escape(old) + r'"'
         result, count = re.subn(pattern, lambda found: found.group(1) + '"' + new + '"', text)
         if count != 1:
             raise RuntimeError("Parrot menu row missing or ambiguous: " + key)
