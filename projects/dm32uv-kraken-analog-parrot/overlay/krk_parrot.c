@@ -157,6 +157,8 @@ void krk_analog_parrot_bg_tick(void)
     if (!A.armed || !A.buffer || A.playing) {
         release_path();return;
     }
+    /* Avoid competing FM RX RAM owners; Parrot is exclusive while armed. */
+    if(krk_mon_on())krk_mon_set(0);
     if((int)(now-A.cool_until)<0) {
         release_path();return;
     }
