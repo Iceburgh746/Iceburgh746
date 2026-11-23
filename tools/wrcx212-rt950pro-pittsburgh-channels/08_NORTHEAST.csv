@@ -1,0 +1,4 @@
+Location,Name,Frequency,Duplex,Offset,Tone,rToneFreq,cToneFreq,DtcsCode,DtcsPolarity,RxDtcsCode,CrossMode,Mode,TStep,Skip,Power,Comment,URCALL,RPT1CALL,RPT2CALL,DVCODE
+1,NE_NCAMBRIA,462.57500,off,0.00000,Tone,67.0,67.0,023,NN,023,Tone->Tone,FM,5.00,S,0.0W,"RX ONLY candidate | WRJN905 | Northern Cambria, Cambria PA | RepeaterBook OPEN; terrain-dependent | Source: https://www.repeaterbook.com/gmrs/Display_SS.php?state_id=42",,,,
+2,NE_ROCKTON,462.65000,off,0.00000,Tone,141.3,141.3,023,NN,023,Tone->Tone,FM,5.00,S,0.0W,"RX ONLY candidate | WRDV946 | Rockton, Clearfield PA | RepeaterBook OPEN; extended fringe candidate | Source: https://www.repeaterbook.com/gmrs/Display_SS.php?state_id=42",,,,
+3,NE_MAHAFFEY,462.67500,off,0.00000,Tone,151.4,151.4,023,NN,023,Tone->Tone,FM,5.00,S,0.0W,"RX ONLY candidate | WSHL562 | Mahaffey, Clearfield PA | RepeaterBook lists output 151.4; tone mapping verify | Source: https://www.repeaterbook.com/gmrs/Display_SS.php?state_id=42",,,,
