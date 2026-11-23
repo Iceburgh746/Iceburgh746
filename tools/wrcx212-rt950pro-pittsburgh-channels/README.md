@@ -9,7 +9,7 @@ Five separate standard CHIRP-compatible channel CSV files are provided. Import o
 1. 01_GMRS_SIMPLEX — 22 standard GMRS channels. Ch 8–14 receive-only on a mobile; CH 19 notes Friday simplex.
 2. 02_REPEATER_PAIRS — 8 generic +5 MHz GMRS repeater pairs; no access tone, scan skipped until configured.
 3. 03_VERIFIED_LOCAL — Pittsburgh Observatory Hill (462.575 +5 PL141.3), Greensburg (462.600 +5 PL136.5).
-4. 04_UNVERIFIED_LOCAL — 7 extra area repeater candidates, tagged RX-only and excluded from scanning; verify the owner/tone/access and on-air status before enabling TX.
+4. 04_UNVERIFIED_LOCAL — 9 extra area repeater candidates, tagged RX-only and excluded from scanning; verify the owner/tone/access and on-air status before enabling TX.
 5. 05_NOAA_WEATHER — 7 NOAA weather frequencies, receive-only; scan skipped.
 
 ## Safety and programming
@@ -39,3 +39,16 @@ Five separate standard CHIRP-compatible channel CSV files are provided. Import o
 
 ## Why no one-click native RMS file?
 Current nicFW6 RMS native memory layout was not independently validated against your *actual* current codeplug, so manufacturing a byte-level image would risk destroying existing memories. The editor is documented to support nicFW950 channel import, zone targeting, and post-write verification.
+
+## Cross-check with myGMRS (2026-11-23)
+The myGMRS repeater directory was consulted at https://mygmrs.com/browse and https://mygmrs.com/map but returned a JavaScript-required page to this research environment. Thus **a comprehensive current myGMRS directory cross-check, permission status, and tone inventory could not be verified**. Do not assume the current directory was fully scraped or that absence means no repeaters.
+
+The public South Western PA GMRS club forum at https://forums.mygmrs.com/clubs/16-south-western-pa-gmrs/ was accessible and includes direct repeater operator announcements:
+
+- **Elizabeth / 51 Estates / Routes 51 and 48:** Operator W3AOL stated a new repeater was online and open; **462.725 MHz output; 467.725 MHz input; CTCSS 131.8 Hz**. Announcement March 31, 2025, with follow-up reporting operational in May 2025. Not confirmed on air as of Nov 2026.
+- **Wopsononock Mountain (near Altoona):** Horseshoe Amateur Radio Club WRKP669 announced the repeater in July 2025; **462.675 MHz output; 467.675 MHz input; CTCSS 123.0 Hz**, elevation 2,500 ft, public signal reports invited. Not confirmed on air as of Nov 2026.
+- **Observatory Hill status caution:** Club member posted on August 17, 2026, reporting lack of repeater response after returning to the area. This does *not* establish a confirmed outage, but should be investigated before treating it as operating reliably. RepeaterBook continues to show its 462.575 MHz/141.3 Hz listing.
+
+Other recently updated RepeaterBook records in western Pennsylvania can be independently reviewed at https://www.repeaterbook.com/gmrs/Display_date.php?date=365&state_id=42 (including New Kensington 462.700 MHz and Mt Pleasant 462.700 MHz). These are not automatically programmed as verified operational repeaters.
+
+The new Elizabeth and Wopsononock records are placed in **04_UNVERIFIED_LOCAL**, marked RX-only and scan skipped. They are source-supported operator announcements, but the current live directory and RF reachability from Penn Hills remain unconfirmed. Confirm repeaters' present availability and access policies before enabling repeater TX. A full live directory check should be done in an interactive myGMRS browser while logged into your own account, with permission where required.
