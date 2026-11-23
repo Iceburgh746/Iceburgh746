@@ -1,0 +1,3 @@
+Location,Name,Frequency,Duplex,Offset,Tone,rToneFreq,cToneFreq,DtcsCode,DtcsPolarity,RxDtcsCode,CrossMode,Mode,TStep,Skip,Power,Comment,URCALL,RPT1CALL,RPT2CALL,DVCODE
+1,OBS_HILL,462.57500,split,467.57500,Tone,141.3,141.3,023,NN,023,Tone->Tone,FM,5.00,,8.0W,WRKF763 Pittsburgh Observatory Hill; RepeaterBook PL 141.3; K3IR reports D654: confirm with owner before TX,,,,
+2,GREENSBURG,462.60000,split,467.60000,Tone,136.5,136.5,023,NN,023,Tone->Tone,FM,5.00,,8.0W,WRJT787 Greensburg open listed; PL136.5 both ways,,,,
