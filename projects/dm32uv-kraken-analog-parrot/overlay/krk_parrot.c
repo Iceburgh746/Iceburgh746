@@ -157,6 +157,9 @@ void krk_analog_parrot_bg_tick(void)
     if (!A.armed || !A.buffer || A.playing) {
         release_path();return;
     }
+    if((int)(now-A.cool_until)<0) {
+        release_path();return;
+    }
     if(!path_ok()) {
         record_finish();
         release_path();
@@ -187,7 +190,8 @@ void krk_analog_parrot_bg_tick(void)
             }
             A.last_half_tick=now;
             record_half(FM_RX_HALF(sw==1?0:1));
-            if(A.samples==CAP*4u)record_finish();
+            /* When the buffer fills, hold the capture until carrier drop.
+               Do not overwrite the message with the tail of the same call. */
         }
     } else if(A.rec) {
         record_finish();
