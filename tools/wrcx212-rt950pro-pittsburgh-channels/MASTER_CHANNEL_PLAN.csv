@@ -1,0 +1,47 @@
+Zone,Name,RX_MHz,TX_MHz,CTCSS_Tone,Scan_Skip,Verification_Notes
+01_GMRS_SIMPLEX,GMRS01,462.56250,462.56250,,,5W max; monitor equipment power
+01_GMRS_SIMPLEX,GMRS02,462.58750,462.58750,,,5W max; monitor equipment power
+01_GMRS_SIMPLEX,GMRS03,462.61250,462.61250,,,5W max; monitor equipment power
+01_GMRS_SIMPLEX,GMRS04,462.63750,462.63750,,,5W max; monitor equipment power
+01_GMRS_SIMPLEX,GMRS05,462.66250,462.66250,,,5W max; monitor equipment power
+01_GMRS_SIMPLEX,GMRS06,462.68750,462.68750,,,5W max; monitor equipment power
+01_GMRS_SIMPLEX,GMRS07,462.71250,462.71250,,,5W max; monitor equipment power
+01_GMRS_SIMPLEX,GMRS08,467.56250,RX_ONLY,,,RX ONLY on this mobile; 467 interstitial is handheld-only
+01_GMRS_SIMPLEX,GMRS09,467.58750,RX_ONLY,,,RX ONLY on this mobile; 467 interstitial is handheld-only
+01_GMRS_SIMPLEX,GMRS10,467.61250,RX_ONLY,,,RX ONLY on this mobile; 467 interstitial is handheld-only
+01_GMRS_SIMPLEX,GMRS11,467.63750,RX_ONLY,,,RX ONLY on this mobile; 467 interstitial is handheld-only
+01_GMRS_SIMPLEX,GMRS12,467.66250,RX_ONLY,,,RX ONLY on this mobile; 467 interstitial is handheld-only
+01_GMRS_SIMPLEX,GMRS13,467.68750,RX_ONLY,,,RX ONLY on this mobile; 467 interstitial is handheld-only
+01_GMRS_SIMPLEX,GMRS14,467.71250,RX_ONLY,,,RX ONLY on this mobile; 467 interstitial is handheld-only
+01_GMRS_SIMPLEX,GMRS15,462.55000,462.55000,,,GMRS licensed simplex
+01_GMRS_SIMPLEX,GMRS16,462.57500,462.57500,,,GMRS licensed simplex
+01_GMRS_SIMPLEX,GMRS17,462.60000,462.60000,,,GMRS licensed simplex
+01_GMRS_SIMPLEX,GMRS18,462.62500,462.62500,,,GMRS licensed simplex
+01_GMRS_SIMPLEX,GMRS19,462.65000,462.65000,,,Friday 6pm local simplex Ch19
+01_GMRS_SIMPLEX,GMRS20,462.67500,462.67500,,,GMRS licensed simplex
+01_GMRS_SIMPLEX,GMRS21,462.70000,462.70000,,,GMRS licensed simplex
+01_GMRS_SIMPLEX,GMRS22,462.72500,462.72500,,,GMRS licensed simplex
+02_REPEATER_PAIRS,RPT15,462.55000,467.55000,,S,Generic GMRS repeater pair; no access tone; configure before TX
+02_REPEATER_PAIRS,RPT16,462.57500,467.57500,,S,Generic GMRS repeater pair; no access tone; configure before TX
+02_REPEATER_PAIRS,RPT17,462.60000,467.60000,,S,Generic GMRS repeater pair; no access tone; configure before TX
+02_REPEATER_PAIRS,RPT18,462.62500,467.62500,,S,Generic GMRS repeater pair; no access tone; configure before TX
+02_REPEATER_PAIRS,RPT19,462.65000,467.65000,,S,Generic GMRS repeater pair; no access tone; configure before TX
+02_REPEATER_PAIRS,RPT20,462.67500,467.67500,,S,Generic GMRS repeater pair; no access tone; configure before TX
+02_REPEATER_PAIRS,RPT21,462.70000,467.70000,,S,Generic GMRS repeater pair; no access tone; configure before TX
+02_REPEATER_PAIRS,RPT22,462.72500,467.72500,,S,Generic GMRS repeater pair; no access tone; configure before TX
+03_VERIFIED_LOCAL,OBS_HILL,462.57500,467.57500,141.3,,WRKF763 Pittsburgh Observatory Hill; RepeaterBook PL 141.3; K3IR reports D654: confirm with owner before TX
+03_VERIFIED_LOCAL,GREENSBURG,462.60000,467.60000,136.5,,WRJT787 Greensburg open listed; PL136.5 both ways
+04_UNVERIFIED_LOCAL,PIT_ECHO1,462.55000,RX_ONLY,218.1,S,WQWY341 Pittsburgh Echo1; K3IR listing only; verify active and access; RX ONLY placeholder
+04_UNVERIFIED_LOCAL,LATROBE,462.55000,RX_ONLY,136.5,S,WRQD910 Latrobe Airport; K3IR listing only; verify; RX ONLY placeholder
+04_UNVERIFIED_LOCAL,IMPERIAL,462.60000,RX_ONLY,110.9,S,WSIN296 Imperial; K3IR listing only; verify; RX ONLY placeholder
+04_UNVERIFIED_LOCAL,NV_625,462.62500,RX_ONLY,233.6,S,WSCK413 North Versailles NVT625; K3IR listing only; verify; RX ONLY placeholder
+04_UNVERIFIED_LOCAL,BIRDVILLE,462.65000,RX_ONLY,141.3,S,WSDR636 Natrona Heights; K3IR listing only; verify; RX ONLY placeholder
+04_UNVERIFIED_LOCAL,CHARLEROI,462.65000,RX_ONLY,,S,WURX910 Charleroi; K3IR reports D155; DCS not encoded here; RX-only until verified; RX ONLY placeholder
+04_UNVERIFIED_LOCAL,CHAMPION,462.60000,RX_ONLY,100.0,S,WRJU463 Champion; K3IR listing only; verify; RX ONLY placeholder
+05_NOAA_WEATHER,NOAA_WX1,162.40000,RX_ONLY,,S,NOAA Weather Radio receive-only; local coverage varies
+05_NOAA_WEATHER,NOAA_WX2,162.42500,RX_ONLY,,S,NOAA Weather Radio receive-only; local coverage varies
+05_NOAA_WEATHER,NOAA_WX3,162.45000,RX_ONLY,,S,NOAA Weather Radio receive-only; local coverage varies
+05_NOAA_WEATHER,NOAA_WX4,162.47500,RX_ONLY,,S,NOAA Weather Radio receive-only; local coverage varies
+05_NOAA_WEATHER,NOAA_WX5,162.50000,RX_ONLY,,S,NOAA Weather Radio receive-only; local coverage varies
+05_NOAA_WEATHER,NOAA_WX6,162.52500,RX_ONLY,,S,NOAA Weather Radio receive-only; local coverage varies
+05_NOAA_WEATHER,NOAA_WX7,162.55000,RX_ONLY,,S,NOAA Weather Radio receive-only; local coverage varies
