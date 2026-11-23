@@ -1,0 +1,3 @@
+Location,Name,Frequency,Duplex,Offset,Tone,rToneFreq,cToneFreq,DtcsCode,DtcsPolarity,RxDtcsCode,CrossMode,Mode,TStep,Skip,Power,Comment,URCALL,RPT1CALL,RPT2CALL,DVCODE
+1,W_NILES,462.67500,off,0.00000,Tone,74.4,74.4,023,NN,023,Tone->Tone,FM,5.00,S,0.0W,"RX ONLY candidate | WSGJ216 | Niles, Trumbull OH | RepeaterBook OPEN but testing/reduced status; output tone blank; verify | Source: https://www.repeaterbook.com/gmrs/Display_SS.php?state_id=39",,,,
+2,W_AKRON,462.67500,off,0.00000,Tone,141.3,141.3,023,NN,023,Tone->Tone,FM,5.00,S,0.0W,"RX ONLY candidate | WRUA456 | Akron, Summit OH | RepeaterBook OPEN; fringe or mobile-travel bank, not confirmed Penn Hills reach | Source: https://www.repeaterbook.com/gmrs/Display_SS.php?state_id=39",,,,
