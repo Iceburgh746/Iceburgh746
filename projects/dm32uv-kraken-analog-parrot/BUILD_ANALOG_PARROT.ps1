@@ -14,11 +14,17 @@ function Write-Log([string]$m){
 }
 function Native([string]$exe,[string[]]$arguments){
     Write-Log "RUN: $exe $($arguments -join ' ')"
-    & $exe @arguments 2>&1 | ForEach-Object {
-       $line=[string]$_
-       $line | Tee-Object -FilePath $Log -Append
-    }
-    $code=$LASTEXITCODE
+    # PS 5.1 can raise NativeCommandError for stderr progress under Stop;
+    # permit native stderr while still checking the real exit code.
+    $prior=$ErrorActionPreference
+    try {
+        $ErrorActionPreference='Continue'
+        & $exe @arguments 2>&1 | ForEach-Object {
+            $line=[string]$_
+            $line | Tee-Object -FilePath $Log -Append
+        }
+        $code=$LASTEXITCODE
+    }finally{$ErrorActionPreference=$prior}
     Write-Log "EXIT CODE: $code"
     if($code -ne 0){throw "$exe failed with code $code"}
 }
@@ -85,7 +91,7 @@ if ! docker image inspect dm32uv-re-pipeline:latest >/dev/null 2>&1; then
   docker compose build
   cd ../../dm32uv-kraken
 fi
-tools/build.sh
+bash tools/build.sh
 '@
     Write-Log "Running stock Kraken generators, Docker build and full QEMU tests in WSL"
     Native $wsl @('-d','Ubuntu','--','bash','-lc',$cmd)
