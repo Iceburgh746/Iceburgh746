@@ -45,3 +45,5 @@ Zone,Name,RX_MHz,TX_MHz,CTCSS_Tone,Scan_Skip,Verification_Notes
 05_NOAA_WEATHER,NOAA_WX5,162.50000,RX_ONLY,,S,NOAA Weather Radio receive-only; local coverage varies
 05_NOAA_WEATHER,NOAA_WX6,162.52500,RX_ONLY,,S,NOAA Weather Radio receive-only; local coverage varies
 05_NOAA_WEATHER,NOAA_WX7,162.55000,RX_ONLY,,S,NOAA Weather Radio receive-only; local coverage varies
+04_UNVERIFIED_LOCAL,ELIZABETH_725,462.72500,RX_ONLY,131.8,S,myGMRS SW PA club operator W3AOL reports repeater near Rts 51 & 48 Elizabeth online/open Apr 2025; verify current uptime and permission; RX ONLY until confirmed
+04_UNVERIFIED_LOCAL,WOPSON_675,462.67500,RX_ONLY,123.0,S,myGMRS SW PA club operator WRKP669 reported Wopsononock Mountain repeater active July 2025; 2500 ft; verify current on-air status; RX ONLY until confirmed
