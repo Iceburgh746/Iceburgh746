@@ -6,3 +6,5 @@ Location,Name,Frequency,Duplex,Offset,Tone,rToneFreq,cToneFreq,DtcsCode,DtcsPola
 5,BIRDVILLE,462.65000,off,0.00000,Tone,141.3,141.3,023,NN,023,Tone->Tone,FM,5.00,S,0.0W,WSDR636 Natrona Heights; K3IR listing only; verify; RX ONLY placeholder,,,,
 6,CHARLEROI,462.65000,off,0.00000,,88.5,88.5,023,NN,023,Tone->Tone,FM,5.00,S,0.0W,WURX910 Charleroi; K3IR reports D155; DCS not encoded here; RX-only until verified; RX ONLY placeholder,,,,
 7,CHAMPION,462.60000,off,0.00000,Tone,100.0,100.0,023,NN,023,Tone->Tone,FM,5.00,S,0.0W,WRJU463 Champion; K3IR listing only; verify; RX ONLY placeholder,,,,
+8,ELIZABETH_725,462.72500,off,0.00000,Tone,131.8,131.8,023,NN,023,Tone->Tone,FM,5.00,S,0.0W,myGMRS SW PA club operator W3AOL reports repeater near Rts 51 & 48 Elizabeth online/open Apr 2025; verify current uptime and permission; RX ONLY until confirmed,,,,
+9,WOPSON_675,462.67500,off,0.00000,Tone,123.0,123.0,023,NN,023,Tone->Tone,FM,5.00,S,0.0W,myGMRS SW PA club operator WRKP669 reported Wopsononock Mountain repeater active July 2025; 2500 ft; verify current on-air status; RX ONLY until confirmed,,,,
