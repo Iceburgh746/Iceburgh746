@@ -3,7 +3,7 @@
 ## Scope
 Channel plan built for RT-950 Pro running **nicFW950**. This is **NOT** a native RMS image or existing-radio backup. The radio's current codeplug has not been supplied. **Never overwrite existing memories or zones without first reading and backing up the radio.**
 
-Five separate standard CHIRP-compatible channel CSV files are provided. Import one zone at a time into a deliberately selected empty nicFW group/zone with an RT-950/950Pro editor that supports nicFW950; do **not** assume importer preserves comments, TX inhibit, slot positions, scan skip, groups, or wattage. Verify all fields and especially every receive-only channel after import and BEFORE any radio write.
+Six separate standard CHIRP-compatible channel CSV files are provided. Import one zone at a time into a deliberately selected empty nicFW group/zone with an RT-950/950Pro editor that supports nicFW950; do **not** assume importer preserves comments, TX inhibit, slot positions, scan skip, groups, or wattage. Verify all fields and especially every receive-only channel after import and BEFORE any radio write.
 
 ### Zone layout
 1. 01_GMRS_SIMPLEX — 22 standard GMRS channels. Ch 8–14 receive-only on a mobile; CH 19 notes Friday simplex.
@@ -52,3 +52,20 @@ The public South Western PA GMRS club forum at https://forums.mygmrs.com/clubs/1
 Other recently updated RepeaterBook records in western Pennsylvania can be independently reviewed at https://www.repeaterbook.com/gmrs/Display_date.php?date=365&state_id=42 (including New Kensington 462.700 MHz and Mt Pleasant 462.700 MHz). These are not automatically programmed as verified operational repeaters.
 
 The new Elizabeth and Wopsononock records are placed in **04_UNVERIFIED_LOCAL**, marked RX-only and scan skipped. They are source-supported operator announcements, but the current live directory and RF reachability from Penn Hills remain unconfirmed. Confirm repeaters' present availability and access policies before enabling repeater TX. A full live directory check should be done in an interactive myGMRS browser while logged into your own account, with permission where required.
+
+## Extended-range coverage — Chickaree Mountain (user-confirmed)
+
+**06_EXTENDED_RANGE.csv** contains **CHICKAREE**, KAF9349, Johnstown / Chickaree Mountain, Cambria County, Pennsylvania:
+- RX 462.7000 MHz; TX 467.7000 MHz (+5.000 MHz)
+- CTCSS TX/RX: 123.0 Hz
+- Listed as OPEN by RepeaterBook; KAF9349 is the listed call sign
+- Operator experience: WRCX212 reports successfully communicating through this repeater from their operating area. This is a first-hand report, not independently measured RF coverage.
+- This extends the channel-plan footprint beyond local Pittsburgh toward Johnstown/Cambria County.
+- A successful prior QSO does not guarantee current uptime; verify operating policies and actual settings before programming.
+
+Sources:
+- https://www.repeaterbook.com/gmrs/details.php?ID=123&state_id=42
+- https://clearfieldcountyarc.net/repeaters-gmrs-service/
+- https://www.pa-emcomm.net/pa-gmrs-repeaters.html
+
+Updated channel plan: 49 individual memory rows across 6 group files (22 simplex, 8 generic repeater pairs, 2 verified local, 9 candidate local, 7 NOAA, 1 Chickaree).
