@@ -37,16 +37,13 @@ def main():
         raise RuntimeError("Unknown Kraken Parrot baseline. Refusing to overwrite.")
     if "    krk_mon_tick();" not in p or "void krk_hook_bg_tick(void)" not in p:
         raise RuntimeError("Unknown background-hook baseline. Refusing to patch.")
-    labels = (
-        ('"label": "Parrot On/Off"', '"label": "Analog Parrot"'),
-        ('"label": "Check"', '"label": "Audio Check"'),
-    )
-    for a,b in labels:
-        if a not in m:
-            raise RuntimeError("Expected Channel Set menu label missing: " + a)
-    if "krk_analog_parrot_bg_tick" in p or "WRCX212 Analog Parrot" in t:
-        raise RuntimeError("Source appears to be patched already. Aborting, no changes.")
-    # Validate current menu JSON before touching any file.
+    # Edit the exact Parrot rows by key, never another menu row named "Check".
+    def relabel(text, key, old, new):
+        pattern = r'("key": "' + re.escape(key) + r'",\\s*"label": )"' + re.escape(old) + r'"'
+        result, count = re.subn(pattern, lambda found: found.group(1) + '"' + new + '"', text)
+        if count != 1:
+            raise RuntimeError("Parrot menu row missing or ambiguous: " + key)
+        return result
     json.loads(m)
     new_p = p.replace("void krk_vox_tick(void);",
                       "void krk_analog_parrot_bg_tick(void);\nvoid krk_vox_tick(void);", 1)
@@ -54,9 +51,8 @@ def main():
         raise RuntimeError("No VOX prototype anchor.")
     new_p = new_p.replace("    krk_mon_tick();",
                           "    krk_analog_parrot_bg_tick();\n    krk_mon_tick();", 1)
-    new_m = m
-    for a,b in labels:
-        new_m = new_m.replace(a,b,1)
+    new_m = relabel(m,"paron","Parrot On/Off","Analog Parrot")
+    new_m = relabel(new_m,"parchk","Check","Audio Check")
     json.loads(new_m)
     new_t = overlay.read_text(encoding="utf-8")
     essential = ["krk_parrot_rx_start", "krk_parrot_rx_end", "krk_parrot_tick",
