@@ -1,0 +1,8 @@
+Location,Name,Frequency,Duplex,Offset,Tone,rToneFreq,cToneFreq,DtcsCode,DtcsPolarity,RxDtcsCode,CrossMode,Mode,TStep,Skip,Power,Comment,URCALL,RPT1CALL,RPT2CALL,DVCODE
+1,NOAA_WX1,162.40000,off,0.00000,,88.5,88.5,023,NN,023,Tone->Tone,FM,5.00,S,0.0W,NOAA Weather Radio receive-only; local coverage varies,,,,
+2,NOAA_WX2,162.42500,off,0.00000,,88.5,88.5,023,NN,023,Tone->Tone,FM,5.00,S,0.0W,NOAA Weather Radio receive-only; local coverage varies,,,,
+3,NOAA_WX3,162.45000,off,0.00000,,88.5,88.5,023,NN,023,Tone->Tone,FM,5.00,S,0.0W,NOAA Weather Radio receive-only; local coverage varies,,,,
+4,NOAA_WX4,162.47500,off,0.00000,,88.5,88.5,023,NN,023,Tone->Tone,FM,5.00,S,0.0W,NOAA Weather Radio receive-only; local coverage varies,,,,
+5,NOAA_WX5,162.50000,off,0.00000,,88.5,88.5,023,NN,023,Tone->Tone,FM,5.00,S,0.0W,NOAA Weather Radio receive-only; local coverage varies,,,,
+6,NOAA_WX6,162.52500,off,0.00000,,88.5,88.5,023,NN,023,Tone->Tone,FM,5.00,S,0.0W,NOAA Weather Radio receive-only; local coverage varies,,,,
+7,NOAA_WX7,162.55000,off,0.00000,,88.5,88.5,023,NN,023,Tone->Tone,FM,5.00,S,0.0W,NOAA Weather Radio receive-only; local coverage varies,,,,
