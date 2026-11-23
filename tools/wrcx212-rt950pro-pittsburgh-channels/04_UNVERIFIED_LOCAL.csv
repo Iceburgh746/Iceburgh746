@@ -1,0 +1,8 @@
+Location,Name,Frequency,Duplex,Offset,Tone,rToneFreq,cToneFreq,DtcsCode,DtcsPolarity,RxDtcsCode,CrossMode,Mode,TStep,Skip,Power,Comment,URCALL,RPT1CALL,RPT2CALL,DVCODE
+1,PIT_ECHO1,462.55000,off,0.00000,Tone,218.1,218.1,023,NN,023,Tone->Tone,FM,5.00,S,0.0W,WQWY341 Pittsburgh Echo1; K3IR listing only; verify active and access; RX ONLY placeholder,,,,
+2,LATROBE,462.55000,off,0.00000,Tone,136.5,136.5,023,NN,023,Tone->Tone,FM,5.00,S,0.0W,WRQD910 Latrobe Airport; K3IR listing only; verify; RX ONLY placeholder,,,,
+3,IMPERIAL,462.60000,off,0.00000,Tone,110.9,110.9,023,NN,023,Tone->Tone,FM,5.00,S,0.0W,WSIN296 Imperial; K3IR listing only; verify; RX ONLY placeholder,,,,
+4,NV_625,462.62500,off,0.00000,Tone,233.6,233.6,023,NN,023,Tone->Tone,FM,5.00,S,0.0W,WSCK413 North Versailles NVT625; K3IR listing only; verify; RX ONLY placeholder,,,,
+5,BIRDVILLE,462.65000,off,0.00000,Tone,141.3,141.3,023,NN,023,Tone->Tone,FM,5.00,S,0.0W,WSDR636 Natrona Heights; K3IR listing only; verify; RX ONLY placeholder,,,,
+6,CHARLEROI,462.65000,off,0.00000,,88.5,88.5,023,NN,023,Tone->Tone,FM,5.00,S,0.0W,WURX910 Charleroi; K3IR reports D155; DCS not encoded here; RX-only until verified; RX ONLY placeholder,,,,
+7,CHAMPION,462.60000,off,0.00000,Tone,100.0,100.0,023,NN,023,Tone->Tone,FM,5.00,S,0.0W,WRJU463 Champion; K3IR listing only; verify; RX ONLY placeholder,,,,
