@@ -44,7 +44,7 @@ function CommandPath([string]$exe){
 }
 $state='STARTED'
 try{
-    Write-Log "WRCX212 KRAKEN ANALOG PARROT — isolated build controller"
+    Write-Log "WRCX212 KRAKEN ANALOG PARROT - isolated build controller"
     $git=CommandPath 'git.exe'
     $wsl=CommandPath 'wsl.exe'
     $python=Get-Command 'py.exe' -ErrorAction SilentlyContinue
