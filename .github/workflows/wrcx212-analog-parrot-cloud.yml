@@ -46,6 +46,12 @@ jobs:
           set -euo pipefail
           p=projects/dm32uv-kraken-analog-parrot
           gcc -std=c99 -Wall -Wextra -Werror -fsyntax-only -I "$p/tests/mock" -I "$p/overlay" "$p/overlay/krk_parrot.c"
+      - name: Exercise embedded analog recorder and FM replay with sanitizers
+        run: |
+          set -euo pipefail
+          p=projects/dm32uv-kraken-analog-parrot
+          cc -std=c99 -Wall -Wextra -Werror -fsanitize=address,undefined -fno-omit-frame-pointer -I "$p/tests/mock" "$p/tests/test_embedded_parrot.c" -o /tmp/analog_parrot_embedded_test
+          /tmp/analog_parrot_embedded_test
       - name: Run codec host test (independent research core)
         run: |
           set -euo pipefail
