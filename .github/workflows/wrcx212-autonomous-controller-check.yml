@@ -30,6 +30,34 @@ jobs:
           }
           if ($code.Contains('flash.sh')) { throw 'Prohibited flashing reference' }
           Write-Host 'PASS: pwsh parser and critical controller surface'
+      - name: Test PowerShell logging and native result contracts
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $path = 'projects/dm32uv-kraken-analog-parrot/AUTONOMOUS_ENGINEER.ps1'
+          $tokens = $null
+          $parseErrors = $null
+          $ast = [System.Management.Automation.Language.Parser]::ParseFile($path,[ref]$tokens,[ref]$parseErrors)
+          if ($parseErrors.Count) { throw 'Controller cannot be unit-tested until parser succeeds' }
+          $names = @('Note','Failure','InvokeNative')
+          foreach ($name in $names) {
+            $fn = $ast.Find({param($node) $node -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -eq $name},$true)
+            if (-not $fn) { throw ('Missing function: ' + $name) }
+            . ([scriptblock]::Create($fn.Extent.Text))
+          }
+          $LogDir = Join-Path $env:RUNNER_TEMP 'controller-test'
+          New-Item -ItemType Directory -Force -Path $LogDir | Out-Null
+          $Log = Join-Path $LogDir 'test.log'
+          $Stamp = 'controller_contract_test'
+          $Failures = New-Object System.Collections.ArrayList
+          $record = @(Note 'no pipeline leakage')
+          if ($record.Count -ne 0) { throw 'BUG: logging contaminated function result' }
+          $record = @(InvokeNative '/bin/echo' @('hello') 'native test')
+          if ($record.Count -ne 1) { throw ('BUG: InvokeNative yielded ' + $record.Count + ' objects') }
+          if ($record[0].code -ne 0) { throw 'BUG: native exit 0 not recognized' }
+          $record = @(InvokeNative '/bin/false' @('bad') 'native expected fail')
+          if ($record.Count -ne 1 -or $record[0].code -eq 0) { throw 'BUG: native nonzero exit not recognized' }
+          Write-Host 'PASS: logger emits zero objects; native wrapper returns one result and true exit codes'
       - name: Verify ASCII and source constraints
         run: |
           python3 - <<'PY'
