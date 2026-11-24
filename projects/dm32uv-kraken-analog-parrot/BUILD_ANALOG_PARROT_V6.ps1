@@ -110,9 +110,11 @@ try {
     [System.Management.Automation.Language.Parser]::ParseFile($v4,[ref]$tokens,[ref]$errors) | Out-Null
     if ($errors.Count) { throw ('V4 build script parse failure: ' + ($errors | Out-String)) }
     Log 'Running existing Kraken build controller and QEMU suite'
+    $buildStarted = Get-Date
     Native 'powershell.exe' @('-NoProfile','-ExecutionPolicy','Bypass','-File',$v4)
     # V4 returns a report and can exit zero even when its own internal build is blocked.
     $reports = @(Get-ChildItem -Path $logs -Filter 'Report_*.json' |
+        Where-Object { $_.LastWriteTime -ge $buildStarted } |
         Sort-Object LastWriteTime -Descending)
     if (-not $reports.Count) { throw 'Kraken build report missing' }
     $report = Get-Content -LiteralPath $reports[0].FullName -Raw | ConvertFrom-Json
