@@ -291,10 +291,16 @@ try {
     if ($Tools.aider) { Note 'Aider discovered; preserving source unless a reviewed patch is available' }
 
     $Stage = 'VERIFY_SOURCE'
-    $checkout = AcquireSource
+    $checkout = $null
+    try {
+        $checkout = AcquireSource
+    } catch {
+        Failure 'SOURCE_RECOVERY' $_.Exception.Message
+        RecordAction 'Source recovery failed; trying cloud build instead of stopping controller'
+    }
     $Stage = 'BUILD'
     $passed = $false
-    if (-not $NoLocalBuild -and (WslDockerReady $Tools.wsl)) {
+    if ($checkout -and -not $NoLocalBuild -and (WslDockerReady $Tools.wsl)) {
         $passed = BuildLocal $Tools.wsl
     } else {
         RecordAction 'Bypassing unavailable local Docker; using authenticated cloud workflow when possible'
