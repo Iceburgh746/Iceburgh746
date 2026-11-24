@@ -23,3 +23,13 @@ Obtain real GitHub Actions logs and correct concrete host/C-SKY compiler or QEMU
 
 Cloud workflow: https://github.com/Iceburgh746/Iceburgh746/actions/workflows/wrcx212-analog-parrot-cloud.yml
 PowerShell parser checks: https://github.com/Iceburgh746/Iceburgh746/actions/workflows/wrcx212-autonomous-controller-check.yml
+
+## Autonomous controller improvements (continuation)
+- Source recovery: absent Kraken checkouts are cloned into the isolated project workspace and patched by the reversible Python patcher; missing companion dm32uv-re checkout is cloned with submodules.
+- Local build resolves the actual Ubuntu workspace mount with `wslpath` and passes an LF-only shell script on disk.
+- Build failures are classified by observable native output; network failures receive a bounded retry; unrecognized compiler errors stop rather than executing generated code.
+- SHA-256 hashes of the three modified source files are recorded before each local build.
+- Blocked runs exit nonzero after producing their JSON report, rather than incorrectly succeeding.
+- A separate ChatGPT hourly conditional automation watches repository build milestones and can notify on new results; it is not a direct PowerShell-to-chat transport.
+- GitHub Issues remain disabled. Full local logs stay private, and Actions results are accessible through GitHub when available.
+- Successful cross-compilation, passing QEMU, and live Analog FM testing remain UNVERIFIED until their actual logs are inspected.
