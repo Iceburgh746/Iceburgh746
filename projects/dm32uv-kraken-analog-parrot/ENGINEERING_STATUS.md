@@ -33,3 +33,9 @@ PowerShell parser checks: https://github.com/Iceburgh746/Iceburgh746/actions/wor
 - A separate ChatGPT hourly conditional automation watches repository build milestones and can notify on new results; it is not a direct PowerShell-to-chat transport.
 - GitHub Issues remain disabled. Full local logs stay private, and Actions results are accessible through GitHub when available.
 - Successful cross-compilation, passing QEMU, and live Analog FM testing remain UNVERIFIED until their actual logs are inspected.
+
+## Controller fix — November 23 continuation
+- Fixed a real PowerShell correctness bug: `Note` used `Tee-Object` on the success pipeline and polluted typed return values from `InvokeNative`, potentially corrupting result/exit-code checks.
+- Added a hosted PowerShell contract test that extracts these functions and verifies zero logging pipeline objects, single native result object, and accurate 0/nonzero exit codes.
+- The controller now clones missing Kraken and companion repositories, applies the known reversible overlay only when absent, and resolves the actual Windows project path through `wslpath` instead of hard-coding `C:\Radtel` as an Ubuntu mount.
+- No actual hosted workflow run result was obtainable with the available GitHub connector: it exposes workflow jobs by known run ID but no general workflow-run listing. Do not claim success based on commits alone.
