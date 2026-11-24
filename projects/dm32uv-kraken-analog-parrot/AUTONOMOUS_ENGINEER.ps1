@@ -197,39 +197,10 @@ function CloudBuild([string]$gh) {
     return $false
 }
 function PublishStatus {
-    $gh = $Tools.gh
-    if (-not $gh) { Note 'STATUS DELIVERY: GitHub CLI unavailable; local JSON report retained'; return }
-    $title = 'WRCX212 autonomous engineering status - ' + $Stamp
-    $bodyFile = Join-Path $LogDir ('Status_' + $Stamp + '.md')
-    $body = @(
-        '# WRCX212 Kraken Analog Parrot automated status',
-        '',
-        'Status: ' + $script:State,
-        'Stage: ' + $script:Stage,
-        'Cloud build: ' + $script:CloudURL,
-        'Firmware flashed: NO',
-        'Hardware verified: NO',
-        '',
-        'Failure categories: ' + ((@($Failures | ForEach-Object { $_.category })) -join ', '),
-        '',
-        'No console logs, personal filesystem paths, tokens or source firmware are published.'
-    ) -join [char]10
-    [System.IO.File]::WriteAllText($bodyFile,$body,(New-Object System.Text.UTF8Encoding($false)))
-    $old = $ErrorActionPreference
-    try {
-        $ErrorActionPreference = 'Continue'
-        $result = & $gh issue create --repo $Repo --title $title --body-file $bodyFile 2>&1
-        $code = $LASTEXITCODE
-        if ($code -eq 0) {
-            Note ('STATUS DELIVERED TO GITHUB: ' + (($result | Out-String).Trim()))
-        } else {
-            Note ('STATUS DELIVERY NOT AVAILABLE (code ' + $code + '); local report retained')
-        }
-    } catch {
-        Note ('STATUS DELIVERY ERROR; local report retained: ' + $_.Exception.Message)
-    } finally { $ErrorActionPreference = $old }
+    # Repository Issues are disabled (GitHub API 410).
+    # Save local report only; cloud workflows expose their own authenticated logs.
+    Note 'REPORT CHANNEL: GitHub Issues disabled; retained full local JSON and cloud workflow URL'
 }
-
 function WriteReport {
     $data = [ordered]@{
         project='WRCX212 DM-32UV Kraken Analog Parrot'
