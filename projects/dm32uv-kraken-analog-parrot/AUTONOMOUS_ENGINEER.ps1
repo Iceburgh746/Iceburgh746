@@ -152,9 +152,49 @@ function CloudBuild([string]$gh) {
         Failure 'CLOUD_DISPATCH' 'GitHub Actions dispatch failed; inspect native stdout/stderr'
         return $false
     }
-    Mark 'Cloud build dispatched; compilation result not yet verified'
-    # Return dispatched state, never claim success without the completed run status.
-    return $true
+    Mark 'Cloud build dispatched; checking the resulting GitHub Actions run'
+    # Bounded polling; no automatic chat-posting API is available.
+    $runId = $null
+    for ($probe=0; $probe -lt 18; $probe++) {
+        Start-Sleep -Seconds 10
+        $listed = InvokeNative $gh @('run','list','--repo',$Repo,'--workflow',$Workflow,'--limit','5','--json','databaseId,status,conclusion,createdAt,url') 'get workflow runs'
+        if ($listed.code -ne 0) { continue }
+        try {
+            $items = @(Get-Content -LiteralPath $listed.stdout -Raw | ConvertFrom-Json)
+            $candidate = @($items | Where-Object { [datetime]$_.createdAt -ge $Started.AddMinutes(-1) } |
+                Sort-Object createdAt -Descending | Select-Object -First 1)
+            if ($candidate.Count -gt 0) {
+                $runId = [string]$candidate[0].databaseId
+                if ($candidate[0].url) { $script:CloudURL = [string]$candidate[0].url }
+                break
+            }
+        } catch {
+            Failure 'CLOUD_RUN_LIST_PARSE' $_.Exception.Message
+        }
+    }
+    if (-not $runId) {
+        Failure 'CLOUD_RUN_UNKNOWN' 'Dispatch succeeded but new workflow run was not located'
+        return $false
+    }
+    RecordAction ('Monitoring GitHub Actions run ' + $runId)
+    $watch = InvokeNative $gh @('run','watch',$runId,'--repo',$Repo,'--exit-status','--interval','15') 'watch cloud build'
+    if ($watch.code -eq 0) {
+        Mark 'Cloud workflow completed successfully (host/source and full-build jobs)'
+        return $true
+    }
+    # Safe bounded retry: once only; do not rewrite C source based on untrusted logs.
+    for ($retry=1; $retry -le 1; $retry++) {
+        $run = InvokeNative $gh @('run','rerun',$runId,'--repo',$Repo,'--failed') 'retry failed GitHub Actions jobs'
+        if ($run.code -ne 0) { break }
+        RecordAction 'Retried failed cloud jobs once'
+        $watch = InvokeNative $gh @('run','watch',$runId,'--repo',$Repo,'--exit-status','--interval','15') 'watch retried cloud jobs'
+        if ($watch.code -eq 0) {
+            Mark 'Cloud workflow passed after bounded retry'
+            return $true
+        }
+    }
+    Failure 'CLOUD_BUILD_FAILED' ('Workflow failed; details at ' + $script:CloudURL)
+    return $false
 }
 function WriteReport {
     $data = [ordered]@{
@@ -209,7 +249,7 @@ try {
             $State = 'BLOCKED_CLOUD_DISABLED'
         } else {
             $dispatched = CloudBuild $Tools.gh
-            if ($dispatched) { $State = 'CLOUD_DISPATCHED_RESULT_UNVERIFIED' }
+            if ($dispatched) { $State = 'CLOUD_BUILD_QEMU_PASSED_HARDWARE_UNTESTED' }
             else { $State = 'BLOCKED_LOCAL_AND_CLOUD' }
         }
     }
