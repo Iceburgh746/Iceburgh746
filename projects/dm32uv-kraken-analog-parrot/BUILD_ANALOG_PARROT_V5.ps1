@@ -123,7 +123,23 @@ try{
         Write-Log 'Applying source overlay with backup verification'
         Native $py ($pyArgs+@($apply,$repo))
     }else{
-        Write-Log 'Analog Parrot source already patched; no repeated modifications'
+        Write-Log 'Analog Parrot source already patched'
+        # Update only our own previously deployed overlay revision. Preserve unrelated edits.
+        $oldKnownHash = '89AD8A70FEAC3C56157A11BC133175721053B47E7E042D93127824D872A30B0C'
+        $onDiskHash = (Get-FileHash -Algorithm SHA256 (Join-Path $repo 'patches\kraken_ui\krk_parrot.c')).Hash
+        $newHash = (Get-FileHash -Algorithm SHA256 $overlay).Hash
+        if ($onDiskHash -ne $newHash) {
+            if ($onDiskHash -ne $oldKnownHash) {
+                throw 'Analog Parrot source differs from known V2 version; preserving user edits'
+            }
+            $previous = Join-Path $repo ".wrcx212_analog_parrot_backups\V5_PreUpdate_$Stamp.c"
+            Copy-Item -LiteralPath (Join-Path $repo 'patches\kraken_ui\krk_parrot.c') -Destination $previous
+            if ((Get-FileHash $previous -Algorithm SHA256).Hash -ne $onDiskHash) {
+                throw 'Updated Parrot source backup verification failed'
+            }
+            Copy-Item -LiteralPath $overlay -Destination (Join-Path $repo 'patches\kraken_ui\krk_parrot.c') -Force
+            Write-Log 'Updated known Analog Parrot prototype with latest guarded source; backup retained'
+        }
     }
     # Start Docker Desktop if present, then prove its daemon is available to WSL Ubuntu.
     # Never modify WSL configuration or install a second Docker daemon automatically.
