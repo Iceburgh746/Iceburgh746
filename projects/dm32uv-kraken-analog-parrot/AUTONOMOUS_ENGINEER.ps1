@@ -96,7 +96,33 @@ function CheckCliAuth([string]$gh) {
 function AcquireSource {
     $checkout = Join-Path $ProjectRoot 'workspace\dm32uv-kraken'
     if (-not (Test-Path (Join-Path $checkout '.git'))) {
-        throw 'Kraken source checkout missing. Preserve previous files; run existing V4 source installer once.'
+        if (-not $Tools.git) { throw 'Kraken checkout missing and Git is unavailable' }
+        New-Item -ItemType Directory -Path (Split-Path $checkout -Parent) -Force | Out-Null
+        RecordAction 'Recover missing Kraken source checkout in isolated project workspace'
+        $clone = InvokeNative $Tools.git @('clone','https://github.com/awkaplan/dm32uv-kraken.git',$checkout) 'clone Kraken source'
+        if ($clone.code -ne 0) { throw 'Unable to clone known Kraken source' }
+    }
+    $parrotFile = Join-Path $checkout 'patches\kraken_ui\krk_parrot.c'
+    if ((Get-Content -LiteralPath $parrotFile -Raw) -notmatch 'WRCX212 Analog Parrot') {
+        if (-not $Tools.python) { throw 'Python missing; cannot apply verified source patch' }
+        $overlayRoot = Join-Path $ProjectRoot 'patcher'
+        $patcherFile = Join-Path $overlayRoot 'apply_analog_parrot.py'
+        $overlayFile = Join-Path $overlayRoot 'overlay\krk_parrot.c'
+        New-Item -ItemType Directory -Force -Path (Split-Path $overlayFile -Parent) | Out-Null
+        foreach ($pair in @(
+            @('apply_analog_parrot.py',$patcherFile),
+            @('overlay/krk_parrot.c',$overlayFile)
+        )) {
+            $tmp = [string]$pair[1] + '.incoming'
+            Invoke-WebRequest -Uri ($SourceURL + [string]$pair[0]) -OutFile $tmp -UseBasicParsing -ErrorAction Stop
+            if ((Get-Item -LiteralPath $tmp).Length -lt 200) { throw 'Incomplete source patch download' }
+            Move-Item -LiteralPath $tmp -Destination $pair[1] -Force
+        }
+        RecordAction 'Apply reversible source overlay to clean upstream checkout'
+        $applyArgs = @($patcherFile,$checkout)
+        if ((Split-Path $Tools.python -Leaf) -eq 'py.exe') { $applyArgs = @('-3') + $applyArgs }
+        $patched = InvokeNative $Tools.python $applyArgs 'apply source patch'
+        if ($patched.code -ne 0) { throw 'Source patcher refused baseline; originals preserved' }
     }
     foreach ($name in @('patches\kraken_ui\krk_parrot.c','patches\kraken_ui\krk_periodic.c','patches\kraken_ui\menu_hosts.json')) {
         if (-not (Test-Path (Join-Path $checkout $name))) {
