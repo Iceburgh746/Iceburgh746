@@ -88,6 +88,30 @@ function InvokeNative([string]$exe,[string[]]$argv,[string]$label) {
     Note ('EXIT ' + $label + ': ' + $exitCode)
     return [ordered]@{ code=$exitCode; stdout=$outFile; stderr=$errFile }
 }
+function ClassifyFailure([string]$message) {
+    $m = [string]$message
+    if ($m -match 'temporary failure in name resolution|could not resolve host|connection reset|TLS handshake timeout|HTTP 429|rate limit') { return 'TRANSIENT_NETWORK' }
+    if ($m -match 'docker.*daemon|Cannot connect to the Docker daemon|command .docker. could not be found') { return 'DOCKER_UNAVAILABLE' }
+    if ($m -match 'no space left|out of disk space|ENOSPC') { return 'DISK_CAPACITY' }
+    if ($m -match 'Permission denied|Access is denied|authentication required|HTTP 401|HTTP 403') { return 'PERMISSION_OR_AUTH' }
+    if ($m -match 'undefined reference|implicit declaration|error:|fatal error:|syntax error') { return 'SOURCE_OR_COMPILER' }
+    if ($m -match 'QEMU.*timed out|gdb.*timeout|emulator timeout') { return 'QEMU_TIMEOUT' }
+    return 'UNCLASSIFIED'
+}
+function SnapshotSources([string]$checkout) {
+    $manifest = Join-Path $LogDir ('PreBuild_SourceHashes_' + $Stamp + '.json')
+    $tracked = @('patches\kraken_ui\krk_parrot.c',
+                 'patches\kraken_ui\krk_periodic.c',
+                 'patches\kraken_ui\menu_hosts.json')
+    $records = foreach ($rel in $tracked) {
+        $p = Join-Path $checkout $rel
+        if (-not (Test-Path -LiteralPath $p)) { throw ('Source manifest input missing: ' + $rel) }
+        [ordered]@{ relative_path=$rel; sha256=(Get-FileHash -LiteralPath $p -Algorithm SHA256).Hash }
+    }
+    $records | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $manifest -Encoding UTF8
+    Mark ('Immutable pre-build source SHA-256 manifest: ' + $manifest)
+}
+
 function CheckCliAuth([string]$gh) {
     if (-not $gh) { return $false }
     $r = InvokeNative $gh @('auth','status') 'GitHub CLI auth'
@@ -174,12 +198,14 @@ function BuildLocal([string]$wsl) {
         if ($r.code -eq 0) { Mark 'Full local Kraken build and stock QEMU suite returned exit 0'; return $true }
         # Bounded targeted retry: transient registry/network or QEMU timing, never patch unknown C code.
         $errors = (Get-Content -LiteralPath $r.stderr -Raw -ErrorAction SilentlyContinue) + "`n" + (Get-Content -LiteralPath $r.stdout -Raw -ErrorAction SilentlyContinue)
-        if ($errors -match 'timed out|TLS handshake timeout|connection reset|network is unreachable|Temporary failure in name resolution') {
+        $kind = ClassifyFailure $errors
+        Note ('FAILURE_CLASSIFICATION attempt=' + $i + ' type=' + $kind)
+        if ($kind -eq 'TRANSIENT_NETWORK') {
             Failure 'TRANSIENT_NETWORK' ('Attempt ' + $i + ' returned ' + $r.code)
             Start-Sleep -Seconds (3 * $i)
             continue
         }
-        if ($errors -match 'timeout|QEMU|gdb') {
+        if ($kind -eq 'QEMU_TIMEOUT') {
             Failure 'QEMU_OR_TEST_TIMEOUT' ('Attempt ' + $i + ' returned ' + $r.code)
             # Do not silently mark an assertion failure as transient.
         } else {
@@ -294,6 +320,7 @@ try {
     $checkout = $null
     try {
         $checkout = AcquireSource
+        SnapshotSources $checkout
     } catch {
         Failure 'SOURCE_RECOVERY' $_.Exception.Message
         RecordAction 'Source recovery failed; trying cloud build instead of stopping controller'
@@ -323,3 +350,9 @@ try {
     WriteReport
     PublishStatus
 }
+# Automation consumers must not treat a logged failure as a successful process.
+if ($State -notmatch '^(BUILD_QEMU_PASSED_HARDWARE_UNTESTED|CLOUD_BUILD_QEMU_PASSED_HARDWARE_UNTESTED)
+) {
+    exit 1
+}
+
