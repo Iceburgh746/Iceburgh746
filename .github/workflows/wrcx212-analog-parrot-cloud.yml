@@ -1,0 +1,121 @@
+name: WRCX212 Analog Parrot - autonomous source and build checks
+
+on:
+  push:
+    paths:
+      - "projects/dm32uv-kraken-analog-parrot/**"
+      - ".github/workflows/wrcx212-analog-parrot-cloud.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: wrcx212-analog-parrot-check
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    name: Apply overlay and run host checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout WRCX212 development sources
+        uses: actions/checkout@v4
+      - name: Checkout upstream Kraken
+        uses: actions/checkout@v4
+        with:
+          repository: awkaplan/dm32uv-kraken
+          path: upstream/dm32uv-kraken
+      - name: Source patch (backs up changed files)
+        run: |
+          set -euo pipefail
+          cp projects/dm32uv-kraken-analog-parrot/apply_analog_parrot.py /tmp/wrcx212-apply.py
+          mkdir -p /tmp/overlay
+          cp projects/dm32uv-kraken-analog-parrot/overlay/krk_parrot.c /tmp/overlay/krk_parrot.c
+          python3 /tmp/wrcx212-apply.py upstream/dm32uv-kraken
+          cd upstream/dm32uv-kraken
+          python3 tools/gen_menu_hosts.py
+          python3 tools/gen_manifest.py
+          python3 tools/gen_claims.py
+          python3 tools/gen_menu_hosts.py --check
+          python3 tools/gen_manifest.py --check
+          python3 tools/gen_claims.py --check
+      - name: Check embedded C syntax with mocks
+        run: |
+          set -euo pipefail
+          p=projects/dm32uv-kraken-analog-parrot
+          gcc -std=c99 -Wall -Wextra -Werror -fsyntax-only -I "$p/tests/mock" -I "$p/overlay" "$p/overlay/krk_parrot.c"
+      - name: Run codec host test (independent research core)
+        run: |
+          set -euo pipefail
+          p=projects/dm32uv-kraken-analog-parrot
+          cc -std=c99 -Wall -Wextra -Werror -fsanitize=address,undefined -fno-omit-frame-pointer "$p/analog_parrot_core.c" "$p/tests/test_core.c" -o /tmp/wrcx212_codec_test
+          /tmp/wrcx212_codec_test
+      - name: Upload validation diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: analog-parrot-source-validation
+          path: |
+            upstream/dm32uv-kraken/.wrcx212_analog_parrot_backups/
+            upstream/dm32uv-kraken/patches/kraken_ui/krk_parrot.c
+          if-no-files-found: warn
+          retention-days: 7
+
+  firmware-build:
+    name: Full Kraken toolchain and QEMU
+    needs: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - name: Checkout project
+        uses: actions/checkout@v4
+      - name: Checkout upstream Kraken
+        uses: actions/checkout@v4
+        with:
+          repository: awkaplan/dm32uv-kraken
+          path: upstream/dm32uv-kraken
+      - name: Checkout reverse engineering toolchain
+        uses: actions/checkout@v4
+        with:
+          repository: awkaplan/dm32uv-re
+          path: upstream/dm32uv-re
+          submodules: recursive
+      - name: Apply Analog Parrot patch
+        run: |
+          set -euo pipefail
+          cp projects/dm32uv-kraken-analog-parrot/apply_analog_parrot.py /tmp/wrcx212-apply.py
+          mkdir -p /tmp/overlay
+          cp projects/dm32uv-kraken-analog-parrot/overlay/krk_parrot.c /tmp/overlay/krk_parrot.c
+          python3 /tmp/wrcx212-apply.py upstream/dm32uv-kraken
+          cd upstream/dm32uv-kraken
+          python3 tools/gen_menu_hosts.py
+          python3 tools/gen_manifest.py
+          python3 tools/gen_claims.py
+      - name: Prepare disk for large toolchain
+        run: |
+          set -euo pipefail
+          df -h .
+          docker info
+      - name: Build upstream C-SKY/QEMU Docker image
+        working-directory: upstream/dm32uv-re/docker
+        run: docker compose build
+      - name: Compile firmware and run upstream QEMU suite
+        working-directory: upstream/dm32uv-kraken
+        run: bash tools/build.sh
+      - name: Report build checksums without publishing proprietary firmware
+        if: success()
+        working-directory: upstream/dm32uv-kraken
+        run: |
+          find out -type f -name '*.sha256' -print -exec head -n 1 {} \; | head -n 120
+      - name: Upload only non-firmware diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: analog-parrot-build-diagnostics
+          path: |
+            upstream/dm32uv-kraken/out/kraken/pack/kraken_ui/report.txt
+            upstream/dm32uv-kraken/out/kraken/test_*.log
+          if-no-files-found: ignore
+          retention-days: 7
