@@ -8,7 +8,7 @@ Replace the Baofeng DM-32UV Kraken firmware's DMR-only Parrot with a narrow-band
 ## Current code deliverables
 - `overlay/krk_parrot.c`: replacement Parrot source; DMR RX hook entry points remain inert for ABI compatibility; original Parrot screens now control analog recording/replay.
 - `apply_analog_parrot.py`: backs up three original source files with SHA256, copies the replacement, hooks the existing 10ms background tick before APRS monitor, relabels Channel Set rows and writes a JSON modification report. Refuses unknown baselines.
-- `BUILD_ANALOG_PARROT_V5.ps1`: isolated one-shot Windows/WSL2/Docker source fetch, patch, generator, Kraken build and QEMU test controller. No radio flash.
+- `BUILD_ANALOG_PARROT_V7.ps1`: isolated one-shot Windows/WSL2/Docker source fetch, patch, generator, Kraken build and QEMU test controller. No radio flash.
 - `analog_parrot_core.c/.h`, `tests/test_core.c`: earlier portable **4-bit ADPCM** research core with a separate codec test. Not linked into firmware; DO NOT mistake its tests for testing the embedded 2-bit codec.
 - `tests/mock/` and `.github/workflows/wrcx212-analog-parrot.yml`: host syntax smoke test for the replacement source using mocked public interfaces; it does not emulate the radio.
 
@@ -22,15 +22,15 @@ Replace the Baofeng DM-32UV Kraken firmware's DMR-only Parrot with a narrow-band
 
 ## One-run local build controller (Windows PowerShell)
 The controller is published at:
-https://raw.githubusercontent.com/Iceburgh746/Iceburgh746/main/projects/dm32uv-kraken-analog-parrot/BUILD_ANALOG_PARROT_V5.ps1
+https://raw.githubusercontent.com/Iceburgh746/Iceburgh746/main/projects/dm32uv-kraken-analog-parrot/BUILD_ANALOG_PARROT_V7.ps1
 
 It requires Windows PowerShell, Git, Python3, WSL Ubuntu and Docker Desktop with WSL integration. It discovers installed tools, clones upstream to a separate directory, installs the overlay with backups, runs code generators, builds its Docker image if not installed, runs Kraken build/QEMU tests and logs the results. It DOES NOT FLASH. It does not claim success unless the actual native command returns exit code 0.
 
 To run in PowerShell (with administrator rights only if your Docker/WSL configuration needs them):
 
 ```powershell
-$u='https://raw.githubusercontent.com/Iceburgh746/Iceburgh746/main/projects/dm32uv-kraken-analog-parrot/BUILD_ANALOG_PARROT_V5.ps1'
-$p='C:\Radtel\WRCX212_KRAKEN_ANALOG_PARROT\BUILD_ANALOG_PARROT_V5.ps1'
+$u='https://raw.githubusercontent.com/Iceburgh746/Iceburgh746/main/projects/dm32uv-kraken-analog-parrot/BUILD_ANALOG_PARROT_V7.ps1'
+$p='C:\Radtel\WRCX212_KRAKEN_ANALOG_PARROT\BUILD_ANALOG_PARROT_V7.ps1'
 New-Item -ItemType Directory -Force -Path (Split-Path $p) | Out-Null
 Invoke-WebRequest $u -OutFile $p -UseBasicParsing -ErrorAction Stop
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File $p
@@ -63,3 +63,6 @@ The user verified V3 PowerShell parsing and the three Kraken generators. The bui
 
 ## V5 (November 23, 2026)
 One-shot Windows controller adds guarded Docker Desktop Ubuntu WSL integration repair. It checks whether the Windows Docker engine has running containers, creates SHA-256 verified backups of Docker `settings-store.json`, uses `docker desktop stop`/`docker desktop start`, enables `IntegratedWslDistros` for Ubuntu, verifies daemon access from Ubuntu, updates only the known previous Analog Parrot overlay revision, then runs the existing Kraken generators and full Docker/QEMU build. Failure is reported and no radio flashing occurs. These actions and the source compile have NOT been independently verified on the user's Windows PC; the user must run the controller there. If Docker settings keys are managed or the engine is inaccessible, the controller stops rather than changing unknown configuration.
+
+## V7 update
+User's Windows PowerShell log shows V6 parsed correctly but stopped on `Docker integration settings schema unknown`. V7 accepts a missing `integratedWslDistros` key and creates it at the top level, together with `enableIntegrationWithDefaultWslDistro`, after backing up Docker settings and safely stopping Docker Desktop only when no containers are running. It refuses ambiguous keys or unverified daemon state; then validates JSON, restarts Docker, probes WSL Ubuntu, and only on successful connectivity invokes the established Kraken build script. Do not equate source publishing with a passing firmware build or hardware test.
