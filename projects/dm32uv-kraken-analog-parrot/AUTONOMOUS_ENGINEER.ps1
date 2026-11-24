@@ -165,7 +165,9 @@ function AcquireSource {
 }
 function WslDockerReady([string]$wsl) {
     if (-not $wsl) { return $false }
-    $r = InvokeNative $wsl @('-d','Ubuntu','--','bash','-lc','command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1') 'WSL Docker probe'
+    # Pass one native command, not a bash -lc string: Windows Start-Process
+    # can split an unquoted compound shell argument and generate false negatives.
+    $r = InvokeNative $wsl @('-d','Ubuntu','--','docker','info','--format','{{.ServerVersion}}') 'WSL Docker probe'
     return ($r.code -eq 0)
 }
 function BuildLocal([string]$wsl) {
