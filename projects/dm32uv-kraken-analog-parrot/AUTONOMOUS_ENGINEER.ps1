@@ -31,7 +31,9 @@ $ReadyForFlash = $false
 
 function Note([string]$Message) {
     $line = '[' + (Get-Date).ToString('HH:mm:ss') + '] ' + $Message
-    $line | Tee-Object -FilePath $Log -Append
+    # Log functions must not emit success-pipeline objects: callers expect one typed result.
+    Add-Content -LiteralPath $Log -Value $line -Encoding UTF8
+    Write-Host $line
 }
 function Mark([string]$Message) {
     [void]$script:Passes.Add($Message)
