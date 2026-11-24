@@ -125,3 +125,53 @@ jobs:
             upstream/dm32uv-kraken/out/kraken/test_*.log
           if-no-files-found: ignore
           retention-days: 7
+
+  report-status:
+    name: Publish build status to connected repository
+    needs: [validate, firmware-build]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - name: Create sanitized machine-readable result
+        env:
+          SOURCE_RESULT: ${{ needs.validate.result }}
+          FIRMWARE_RESULT: ${{ needs.firmware-build.result }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          COMMIT_SHA: ${{ github.sha }}
+        run: |
+          python3 - <<'PY'
+          import json, os
+          from datetime import datetime, timezone
+          source = os.environ["SOURCE_RESULT"]
+          firmware = os.environ["FIRMWARE_RESULT"]
+          report = {
+              "project": "WRCX212 Kraken Analog Parrot",
+              "run_url": os.environ["RUN_URL"],
+              "source_commit": os.environ["COMMIT_SHA"],
+              "source_validation": source,
+              "firmware_build_and_qemu": firmware,
+              "hardware_tested": False,
+              "radio_flashed": False,
+              "flash_ready": False,
+              "recorded_at_utc": datetime.now(timezone.utc).isoformat(),
+          }
+          with open("/tmp/wrcx212_build_status.json", "w") as f:
+              json.dump(report, f, indent=2)
+          print(json.dumps(report, indent=2))
+          PY
+      - name: Commit status file through authenticated GitHub API
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          path='.github/build-status/wrcx212-analog-parrot-latest.json'
+          encoded=$(base64 -w0 /tmp/wrcx212_build_status.json)
+          current=$(gh api "repos/$GH_REPO/contents/$path" --jq '.sha' 2>/dev/null || true)
+          args=(-X PUT "repos/$GH_REPO/contents/$path" -f message='Record verified automated Analog Parrot build status' -f content="$encoded")
+          if [ -n "$current" ]; then args+=(-f sha="$current"); fi
+          gh api "${args[@]}" >/dev/null
+          echo 'Build status published (no stock firmware or private logs uploaded)'
