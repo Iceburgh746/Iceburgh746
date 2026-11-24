@@ -1,0 +1,42 @@
+name: WRCX212 PowerShell controller checks
+on:
+  push:
+    paths:
+      - 'projects/dm32uv-kraken-analog-parrot/AUTONOMOUS_ENGINEER.ps1'
+      - '.github/workflows/wrcx212-autonomous-controller-check.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  powershell-parse:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Parse exact published PowerShell with pwsh
+        shell: pwsh
+        run: |
+          $path = 'projects/dm32uv-kraken-analog-parrot/AUTONOMOUS_ENGINEER.ps1'
+          $tokens = $null
+          $parseErrors = $null
+          [System.Management.Automation.Language.Parser]::ParseFile($path,[ref]$tokens,[ref]$parseErrors) | Out-Null
+          if ($parseErrors.Count) {
+            $parseErrors | Format-List | Out-String | Write-Host
+            throw 'Autonomous controller parser failed'
+          }
+          $code = Get-Content -Raw $path
+          foreach ($required in @('AcquireSource','BuildLocal','CloudBuild','WriteReport','InvokeNative')) {
+            if (-not $code.Contains('function ' + $required)) { throw ('Required function missing: ' + $required) }
+          }
+          if ($code.Contains('flash.sh')) { throw 'Prohibited flashing reference' }
+          Write-Host 'PASS: pwsh parser and critical controller surface'
+      - name: Verify ASCII and source constraints
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('projects/dm32uv-kraken-analog-parrot/AUTONOMOUS_ENGINEER.ps1')
+          data=p.read_bytes()
+          assert data.isascii(), "Controller must remain PS5.1-compatible ASCII"
+          assert b'gh' in data and b'QEMU' in data and b'MaxAttempts' in data
+          print('PASS: ASCII and controller safety keywords')
+          PY
