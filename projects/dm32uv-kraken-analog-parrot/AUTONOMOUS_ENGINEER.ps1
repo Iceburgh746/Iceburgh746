@@ -144,9 +144,21 @@ function WslDockerReady([string]$wsl) {
 }
 function BuildLocal([string]$wsl) {
     $shellPath = Join-Path $ProjectRoot ('autonomous_build_' + $Stamp + '.sh')
+    $re = Join-Path $ProjectRoot 'workspace\dm32uv-re'
+    if (-not (Test-Path (Join-Path $re '.git'))) {
+        if (-not $Tools.git) { throw 'Companion reverse-engineering source missing and Git unavailable' }
+        RecordAction 'Recover missing dm32uv-re toolchain checkout with submodules'
+        $clone = InvokeNative $Tools.git @('clone','--recurse-submodules','https://github.com/awkaplan/dm32uv-re.git',$re) 'clone companion toolchain'
+        if ($clone.code -ne 0) { throw 'Companion toolchain clone failed' }
+    }
+    $rootResult = InvokeNative $wsl @('-d','Ubuntu','--','wslpath','-a',$ProjectRoot) 'resolve WSL workspace path'
+    if ($rootResult.code -ne 0) { throw 'Cannot resolve workspace mount in Ubuntu' }
+    $linuxRoot = (Get-Content -LiteralPath $rootResult.stdout | Select-Object -Last 1).Trim()
+    if (-not $linuxRoot.StartsWith('/')) { throw 'Unexpected WSL workspace path' }
+    $quotedRoot = "'" + $linuxRoot.Replace("'","'\''") + "'"
     $lines = @(
         'set -euo pipefail',
-        'cd /mnt/c/Radtel/WRCX212_KRAKEN_ANALOG_PARROT/workspace/dm32uv-kraken',
+        ('cd ' + $quotedRoot + '/workspace/dm32uv-kraken'),
         'python3 tools/gen_menu_hosts.py',
         'python3 tools/gen_manifest.py',
         'python3 tools/gen_claims.py',
@@ -155,13 +167,13 @@ function BuildLocal([string]$wsl) {
     )
     # Script file is LF only. Bash reads its path, avoiding Windows argument quoting.
     [System.IO.File]::WriteAllText($shellPath,([string]::Join([char]10,$lines) + [char]10),(New-Object System.Text.UTF8Encoding($false)))
-    $linuxScript = '/mnt/c/Radtel/WRCX212_KRAKEN_ANALOG_PARROT/' + (Split-Path $shellPath -Leaf)
+    $linuxScript = $linuxRoot + '/' + (Split-Path $shellPath -Leaf)
     for ($i=1; $i -le $MaxAttempts; $i++) {
         RecordAction ('Local build attempt ' + $i)
         $r = InvokeNative $wsl @('-d','Ubuntu','--','bash',$linuxScript) ('local build '+$i)
         if ($r.code -eq 0) { Mark 'Full local Kraken build and stock QEMU suite returned exit 0'; return $true }
         # Bounded targeted retry: transient registry/network or QEMU timing, never patch unknown C code.
-        $errors = Get-Content -LiteralPath $r.stderr -Raw -ErrorAction SilentlyContinue
+        $errors = (Get-Content -LiteralPath $r.stderr -Raw -ErrorAction SilentlyContinue) + "`n" + (Get-Content -LiteralPath $r.stdout -Raw -ErrorAction SilentlyContinue)
         if ($errors -match 'timed out|TLS handshake timeout|connection reset|network is unreachable|Temporary failure in name resolution') {
             Failure 'TRANSIENT_NETWORK' ('Attempt ' + $i + ' returned ' + $r.code)
             Start-Sleep -Seconds (3 * $i)
