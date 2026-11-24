@@ -57,13 +57,27 @@ function InvokeNative([string]$exe,[string[]]$argv,[string]$label) {
     $outFile = Join-Path $LogDir ('stdout_' + $Stamp + '_' + [guid]::NewGuid().ToString('N') + '.txt')
     $errFile = Join-Path $LogDir ('stderr_' + $Stamp + '_' + [guid]::NewGuid().ToString('N') + '.txt')
     Note ('RUN ' + $label + ': ' + $exe)
+    # Image/toolchain builds can take longer than status probes; every step has a bounded maximum.
+    $timeoutSeconds = 300
+    if ($label -match 'local build|cloud build|watch|workflow') { $timeoutSeconds = 10800 }
+    if ($label -match 'auth|workflow runs|dispatch') { $timeoutSeconds = 180 }
     $exitCode = -999
+    $proc = $null
     try {
-        $proc = Start-Process -FilePath $exe -ArgumentList $argv -Wait -PassThru -NoNewWindow -RedirectStandardOutput $outFile -RedirectStandardError $errFile -ErrorAction Stop
-        $exitCode = $proc.ExitCode
+        $proc = Start-Process -FilePath $exe -ArgumentList $argv -PassThru -NoNewWindow -RedirectStandardOutput $outFile -RedirectStandardError $errFile -ErrorAction Stop
+        if (-not $proc.WaitForExit($timeoutSeconds * 1000)) {
+            try { $proc.Kill() } catch { }
+            try { $proc.WaitForExit(5000) | Out-Null } catch { }
+            Failure 'PROCESS_TIMEOUT' ('Exceeded ' + $timeoutSeconds + ' seconds: ' + $label)
+            $exitCode = 124
+        } else {
+            $exitCode = $proc.ExitCode
+        }
     } catch {
         Failure 'PROCESS_START' ($label + ': ' + $_.Exception.Message)
         throw
+    } finally {
+        if ($proc) { $proc.Dispose() }
     }
     foreach ($file in @($outFile,$errFile)) {
         if (Test-Path -LiteralPath $file) {
