@@ -56,7 +56,7 @@ jobs:
         run: |
           set -euo pipefail
           p=projects/dm32uv-kraken-analog-parrot
-          cc -std=c99 -Wall -Wextra -Werror -fsanitize=address,undefined -fno-omit-frame-pointer "$p/analog_parrot_core.c" "$p/tests/test_core.c" -o /tmp/wrcx212_codec_test
+          cc -std=c99 -Wall -Wextra -Werror -fsanitize=address,undefined -fno-omit-frame-pointer -I "$p" "$p/analog_parrot_core.c" "$p/tests/test_core.c" -o /tmp/wrcx212_codec_test
           /tmp/wrcx212_codec_test
       - name: Upload validation diagnostics
         if: always()
