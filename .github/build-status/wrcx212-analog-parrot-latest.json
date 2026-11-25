@@ -1,11 +1,11 @@
 {
   "project": "WRCX212 Kraken Analog Parrot",
-  "run_url": "https://github.com/Iceburgh746/Iceburgh746/actions/runs/45329110897",
-  "source_commit": "4034d3a13f74418dbdd4d2c18cf643e410d45d5e",
-  "source_validation": "failure",
-  "firmware_build_and_qemu": "skipped",
+  "run_url": "https://github.com/Iceburgh746/Iceburgh746/actions/runs/45597948974",
+  "source_commit": "f8921fd952e2c89704f791f331fb214061775ed0",
+  "source_validation": "success",
+  "firmware_build_and_qemu": "failure",
   "hardware_tested": false,
   "radio_flashed": false,
   "flash_ready": false,
-  "recorded_at_utc": "2026-11-24T04:50:24.678436+00:00"
+  "recorded_at_utc": "2026-11-25T11:59:16.036586+00:00"
 }
